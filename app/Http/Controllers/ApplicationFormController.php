@@ -94,6 +94,21 @@ class ApplicationFormController extends Controller
                     // 'school' => 'required|string'
                 // ]);
 
+                // if ($request->hasFile('valid_id')) {
+                //     $valid_id = $request->file('valid_id')->store('uploads', 'public');
+                // } else {
+                //     return response()->json(['error' => 'No file uploaded'], 400);
+                // }
+                // if ($request->hasFile('id_pic')) {
+                //     $id_pic = $request->file('id_pic')->store('uploads', 'public');
+                // }
+                // if ($request->hasFile('residence_proof')) {
+                //     $residence_proof = $request->file('residence_proof')->store('uploads', 'public');
+                // }
+                // if ($request->hasFile('income_proof')) {
+                //     $income_proof = $request->file('income_proof')->store('uploads', 'public');
+                // }
+
                 $motor = ApplicationForm::create([
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
@@ -126,7 +141,11 @@ class ApplicationFormController extends Controller
                     'spouse_work' => $request->spouse_work,
                     'children_num' => $request->children_num,
                     'children_dep' => $request->children_dep,
-                    'school' => $request->school
+                    'school' => $request->school,
+                    'valid_id' => "hgjhg",
+                    'id_pic' => "kjkjh",
+                    'residence_proof' => "gjhg",
+                    'income_proof' => "jjhgj"
                 ]);
                 
                 return response()->json(['message' => 'Product was created successfully!'], 201);
