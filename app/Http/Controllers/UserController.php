@@ -39,7 +39,9 @@ class UserController extends Controller
             $validatedData = $request->validate([
                 'name' => 'required|string',
                 'email' => 'required|email',
-                'password' => 'required|string'
+                'password' => 'required|string',
+                'role' => 'required|string',
+                'status' => 'required|string'
             ]);
     
             $motor = User::create($validatedData);

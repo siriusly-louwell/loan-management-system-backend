@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MotorcycleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ApplicationFormController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,5 +25,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return response()->json(['message' => 'Success']);
 // });
 Route::resource('motorcycle', MotorcycleController::class);
-
 Route::resource('account', UserController::class);
+Route::resource('application', ApplicationFormController::class);
