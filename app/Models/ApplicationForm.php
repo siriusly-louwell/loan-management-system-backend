@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Address;
 
 class ApplicationForm extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'address_id',
         'first_name',
         'last_name',
         'middle_name',
@@ -42,4 +44,8 @@ class ApplicationForm extends Model
         'children_dep',
         'school'
     ];
+
+    public function address() {
+        return $this->belongsTo(Address::class);
+    }
 }

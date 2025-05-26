@@ -9,5 +9,10 @@ class Motorcycle extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'brand', 'color', 'description', 'price', 'quantity', 'file_path'];
+    protected $fillable = ['name', 'brand', 'color', 'description', 'price', 'quantity', 'file_path', 'interest', 'rebate', 'tenure'];
+
+    public function colors()
+    {
+        return $this->hasMany(Color::class);
+    }
 }

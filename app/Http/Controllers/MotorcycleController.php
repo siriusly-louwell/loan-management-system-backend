@@ -14,8 +14,9 @@ class MotorcycleController extends Controller
      */
     public function index()
     {
-        // $data = Motorcycle::all();
-        return response()->json(Motorcycle::all());
+        // return response()->json(Motorcycle::all());
+        $motorcycles = Motorcycle::with('colors')->get();
+        return response()->json($motorcycles);
     }
 
     /**
@@ -37,21 +38,60 @@ class MotorcycleController extends Controller
     public function store(Request $request)
     {
         try {
-            $validatedData = $request->validate([
+            $validated = $request->validate([
                 'name' => 'required|string',
                 'brand' => 'required|string',
                 'color' => 'required|string',
                 'description' => 'required|string',
                 'price' => 'required|numeric',
                 'quantity' => 'required|integer',
-                'file_path' => 'required|string'
+                'interest' => 'required|integer',
+                'tenure' => 'required|integer',
+                'rebate' => 'required|numeric',
+                'file' => 'required|file|mimes:jpg,jpeg,png',
+                'colors' => 'required|array',
+                'colors.*' => 'required|string',
             ]);
-    
-            $motor = Motorcycle::create($validatedData);
-    
-            return response()->json(['message' => 'Product was created successfully!'], 201);
+
+            if ($request->hasFile('file')) {
+                $filePath = $request->file('file')->store('uploads', 'public');
+            } else {
+                return response()->json(['error' => 'No file uploaded'], 400);
+            }
+
+            $motor = Motorcycle::create([
+                'name' => $validated['name'],
+                'brand' => $validated['brand'],
+                'color' => $validated['color'],
+                'price' => $validated['price'],
+                'description' => $validated['description'],
+                'quantity' => $validated['quantity'],
+                'rebate' => $validated['rebate'],
+                'tenure' => $validated['tenure'],
+                'interest' => $validated['interest'],
+                'file_path' => $filePath,
+            ]);
+
+            // $motor = new Motorcycle();
+            // $motor->name = $validated['name'];
+            // $motor->brand = $validated['brand'];
+            // $motor->color = $validated['color'];
+            // $motor->file_path = $filePath;
+            // $motor->save();
+
+            foreach ($validated['colors'] as $color) {
+                $motor->colors()->create(['color' => $color]);
+            }
+        
+            return response()->json([
+                'message' => 'Product was created successfully!',
+                'file_path' => $filePath
+            ], 201);
         } catch(\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['errors ' => $e->errors()], 422);
+            return response()->json([
+                'errors ' => $e->errors(),
+                'var_colors' => $request->colors
+            ], 422);
         }
     }
 
@@ -63,7 +103,13 @@ class MotorcycleController extends Controller
      */
     public function show(Motorcycle $motorcycle)
     {
+        // return response()->json($motorcycle);
+
+        $motorcycle->load('colors'); // eager load colors
         return response()->json($motorcycle);
+
+        // $motor = Motorcycle::where('id', $motorcycle)->with('colors')->firstOrFail();
+        // return response()->json($motor);
     }
 
     /**

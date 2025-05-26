@@ -17,11 +17,14 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('brand');
-            $table->string('color');
+            // $table->string('color');
             $table->text('description');
             $table->decimal('price', 10, 2);
             $table->integer('quantity');
             $table->text('file_path');
+            $table->integer('interest');
+            $table->decimal('rebate', 10, 2);
+            $table->integer('tenure');
             $table->timestamps();
         });
     }
