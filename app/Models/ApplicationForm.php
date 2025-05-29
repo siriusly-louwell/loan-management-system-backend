@@ -43,7 +43,11 @@ class ApplicationForm extends Model
         'spouse_work',
         'children_num',
         'children_dep',
-        'school'
+        'school',
+        'valid_id',
+        'id_pic',
+        'residence_proof',
+        'income_proof'
     ];
 
     public function address() {

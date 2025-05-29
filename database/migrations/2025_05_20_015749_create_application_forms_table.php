@@ -26,8 +26,8 @@ return new class extends Migration
             $table->string('status');
             $table->string('educ_attain');
             $table->string('residence');
-            $table->decimal('amortization', 10, 2);
-            $table->decimal('rent', 10, 2);
+            $table->decimal('amortization', 20, 2);
+            $table->decimal('rent', 20, 2);
             $table->string('sss');
             $table->string('tin');
             $table->string('income');
@@ -50,6 +50,10 @@ return new class extends Migration
             $table->integer('children_num');
             $table->integer('children_dep');
             $table->string('school');
+            $table->text('id_pic');
+            $table->text('vaild_id');
+            $table->text('residence_proof');
+            $table->text('income_proof');
             $table->timestamps();
         });
     }
