@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\ApplicationForm;
 use App\Models\Address;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ApplicationFormController extends Controller
 {
@@ -16,8 +17,10 @@ class ApplicationFormController extends Controller
      */
     public function index()
     {
-        // $data = ApplicationForm::all();
-        return response()->json(ApplicationForm::all());
+        // return response()->json(ApplicationForm::all());
+        $applications = ApplicationForm::with(['user', 'address'])->get();
+
+        return response()->json($applications);
     }
 
     /**
@@ -38,7 +41,7 @@ class ApplicationFormController extends Controller
      */
     public function store(Request $request)
     {
-        DB::transaction(function () use ($request) {
+        $response = DB::transaction(function () use ($request) {
             try {
                 // $validateAddress = $request->validate([
                 //     'personal_pres' => 'required|string',
@@ -94,6 +97,7 @@ class ApplicationFormController extends Controller
                     // 'school' => 'required|string'
                 // ]);
 
+                $recordId = '2025-'. strtoupper(Str::random(8));
                 $motor = ApplicationForm::create([
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
@@ -126,18 +130,20 @@ class ApplicationFormController extends Controller
                     'spouse_work' => $request->spouse_work,
                     'children_num' => $request->children_num,
                     'children_dep' => $request->children_dep,
-                    'school' => $request->school
+                    'school' => $request->school,
+                    'record_id' => $recordId
                 ]);
                 
-                return response()->json(['message' => 'Product was created successfully!'], 201);
                 return response()->json([
-                    'application' => $motor,
-                    'address' => $address
+                    'message' => 'Account was created successfully!',
+                    'record_id' => $recordId
                 ], 201);
             } catch(\Illuminate\Validation\ValidationException $e) {
                 return response()->json(['errors ' => $e->errors()], 422);
             }
         });
+
+        return $response;
     }
 
     /**
@@ -148,7 +154,10 @@ class ApplicationFormController extends Controller
      */
     public function show(ApplicationForm $application)
     {
-        return response()->json($application);
+        return response()->json($application->load('address'));
+        // return response()->json(
+        //     $application->load(['address', 'user'])
+        // );
     }
 
     /**
@@ -172,19 +181,17 @@ class ApplicationFormController extends Controller
     public function update(Request $request, ApplicationForm $application)
     {
         try {
-            $validatedData = $request->validate([
-                'name' => 'sometimes|string',
-                'brand' => 'sometimes|string',
-                'color' => 'sometimes|string',
-                'description' => 'sometimes|string',
-                'price' => 'sometimes|numeric',
-                'quantity' => 'sometimes|integer',
-                'file_path' => 'sometimes|string'
+            $request->validate([
+                'user_id' => 'required|integer',
             ]);
-    
-            $application->update($validatedData);
-    
-            return response()->json(['message' => 'Product was created successfully!'], 201);
+
+            $application->user_id = $request->user_id;
+            $application->save();
+
+            return response()->json([
+                'message' => 'Status updated successfully',
+                'data' => $application
+            ]);
         } catch(\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }

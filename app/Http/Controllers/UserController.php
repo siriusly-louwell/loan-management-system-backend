@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\ApplicationForm;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -44,7 +46,19 @@ class UserController extends Controller
                 'status' => 'required|string'
             ]);
     
-            $motor = User::create($validatedData);
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => Hash::make($validatedData['password']),
+                'role' => $validatedData['role'],
+                'status' => $validatedData['status'],
+            ]);
+
+            if($validatedData['role'] == 'customer') {
+                $application = ApplicationForm::findOrFail($request->id);
+                $application->user_id = $user->id;
+                $application->save();
+            }
     
             return response()->json(['message' => 'User was added successfully!'], 201);
         } catch(\Illuminate\Validation\ValidationException $e) {

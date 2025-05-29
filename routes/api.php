@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MotorcycleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ApplicationFormController;
+use App\Http\Controllers\Api\Auth\LoginController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,3 +28,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::resource('motorcycle', MotorcycleController::class);
 Route::resource('account', UserController::class);
 Route::resource('application', ApplicationFormController::class);
+Route::post('/login', [LoginController::class, 'login']);
