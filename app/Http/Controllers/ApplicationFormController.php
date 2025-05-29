@@ -114,6 +114,7 @@ class ApplicationFormController extends Controller
 
                 $recordId = '2025-'. strtoupper(Str::random(8));
                 $motor = ApplicationForm::create([
+                    'record_id' => $recordId,
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
                     'middle_name' => $request->middle_name,
