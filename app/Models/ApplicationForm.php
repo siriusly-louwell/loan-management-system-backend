@@ -12,6 +12,7 @@ class ApplicationForm extends Model
 
     protected $fillable = [
         'address_id',
+        'apply_status',
         'record_id',
         'first_name',
         'last_name',
@@ -44,10 +45,10 @@ class ApplicationForm extends Model
         'children_num',
         'children_dep',
         'school',
-        'valid_id',
-        'id_pic',
-        'residence_proof',
-        'income_proof'
+        // 'valid_id',
+        // 'id_pic',
+        // 'residence_proof',
+        // 'income_proof'
     ];
 
     public function address() {

@@ -115,6 +115,7 @@ class ApplicationFormController extends Controller
                 $recordId = '2025-'. strtoupper(Str::random(8));
                 $motor = ApplicationForm::create([
                     'record_id' => $recordId,
+                    'apply_status' => "pending",
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
                     'middle_name' => $request->middle_name,
@@ -196,15 +197,14 @@ class ApplicationFormController extends Controller
     public function update(Request $request, ApplicationForm $application)
     {
         try {
-            $request->validate([
-                'user_id' => 'required|integer',
+            $validated = $request->validate([
+                'apply_status' => 'required|string|max:255'
             ]);
 
-            $application->user_id = $request->user_id;
-            $application->save();
+            $application->update($validated);
 
             return response()->json([
-                'message' => 'Status updated successfully',
+                'message' => 'Data updated successfully',
                 'data' => $application
             ]);
         } catch(\Illuminate\Validation\ValidationException $e) {

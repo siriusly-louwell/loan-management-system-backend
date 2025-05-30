@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Color;
+use App\Models\Image;
 
 class Motorcycle extends Model
 {
@@ -14,5 +16,10 @@ class Motorcycle extends Model
     public function colors()
     {
         return $this->hasMany(Color::class);
+    }
+
+    public function images()
+    {
+        return $this->hasMany(Image::class);
     }
 }

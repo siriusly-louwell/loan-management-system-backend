@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreign('address_id')->references('id')->on('addresses');
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('SET NULL');
             $table->string('record_id');
+            $table->string('apply_status');
             $table->string('first_name');
             $table->string('middle_name');
             $table->string('last_name');
@@ -50,10 +51,10 @@ return new class extends Migration
             $table->integer('children_num');
             $table->integer('children_dep');
             $table->string('school');
-            $table->text('id_pic');
-            $table->text('vaild_id');
-            $table->text('residence_proof');
-            $table->text('income_proof');
+            // $table->text('id_pic');
+            // $table->text('vaild_id');
+            // $table->text('residence_proof');
+            // $table->text('income_proof');
             $table->timestamps();
         });
     }

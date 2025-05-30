@@ -15,7 +15,7 @@ class MotorcycleController extends Controller
     public function index()
     {
         // return response()->json(Motorcycle::all());
-        $motorcycles = Motorcycle::with('colors')->get();
+        $motorcycles = Motorcycle::with(['colors', 'images'])->get();
         return response()->json($motorcycles);
     }
 
@@ -37,6 +37,8 @@ class MotorcycleController extends Controller
      */
     public function store(Request $request)
     {
+        $images = [];
+
         try {
             $validated = $request->validate([
                 'name' => 'required|string',
@@ -48,15 +50,16 @@ class MotorcycleController extends Controller
                 'interest' => 'required|integer',
                 'tenure' => 'required|integer',
                 'rebate' => 'required|numeric',
-                'file' => 'required|file|mimes:jpg,jpeg,png',
+                // 'file' => 'required|file|mimes:jpg,jpeg,png',
+                'files' => 'required|array',
+                'files.*' => 'required|file|mimes:jpg,jpeg,png',
                 'colors' => 'required|array',
                 'colors.*' => 'required|string',
             ]);
 
-            if ($request->hasFile('file')) {
-                $filePath = $request->file('file')->store('uploads', 'public');
-            } else {
-                return response()->json(['error' => 'No file uploaded'], 400);
+            foreach($request->file('files') as $file) {
+                $path = $file->store('uploads', 'public');
+                $images[] = $path;
             }
 
             $motor = Motorcycle::create([
@@ -69,28 +72,26 @@ class MotorcycleController extends Controller
                 'rebate' => $validated['rebate'],
                 'tenure' => $validated['tenure'],
                 'interest' => $validated['interest'],
-                'file_path' => $filePath,
+                'file_path' => $images[0],
             ]);
-
-            // $motor = new Motorcycle();
-            // $motor->name = $validated['name'];
-            // $motor->brand = $validated['brand'];
-            // $motor->color = $validated['color'];
-            // $motor->file_path = $filePath;
-            // $motor->save();
 
             foreach ($validated['colors'] as $color) {
                 $motor->colors()->create(['color' => $color]);
             }
+
+            foreach ($images as $path) {
+                $motor->images()->create(['path' => $path]);
+            }
         
             return response()->json([
                 'message' => 'Product was created successfully!',
-                'file_path' => $filePath
+                'paths' => $images
             ], 201);
         } catch(\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'errors ' => $e->errors(),
-                'var_colors' => $request->colors
+                'var_colors' => $request->colors,
+                'paths' => $images
             ], 422);
         }
     }
@@ -103,7 +104,7 @@ class MotorcycleController extends Controller
      */
     public function show(Motorcycle $motorcycle)
     {
-        $motorcycle->load('colors'); // eager load colors
+        $motorcycle->load(['colors', 'images']); // eager load colors
         return response()->json($motorcycle);
     }
 

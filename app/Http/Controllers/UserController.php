@@ -45,22 +45,32 @@ class UserController extends Controller
                 'role' => 'required|string',
                 'status' => 'required|string'
             ]);
-    
-            $user = User::create([
+
+            $arr = [
                 'name' => $validatedData['name'],
                 'email' => $validatedData['email'],
                 'password' => Hash::make($validatedData['password']),
                 'role' => $validatedData['role'],
                 'status' => $validatedData['status'],
-            ]);
-
+            ];
+    
+            // var_dump($validatedData['role'] == 'customer');
+            // exit();
             if($validatedData['role'] == 'customer') {
-                $application = ApplicationForm::findOrFail($request->id);
-                $application->user_id = $user->id;
-                $application->save();
+                $application = ApplicationForm::where('record_id', $request->record_id)->firstOrFail();
+
+
+                if($application->apply_status == "approved") {
+                    $user = User::create($arr);
+                    $application->user_id = $user->id;
+                    $application->save();
+                    
+                } else return response()->json(['message' => 'Your account is not approved yet', 'type' => 'invalid']);
+            } else {
+                $user = User::create($arr);
             }
     
-            return response()->json(['message' => 'User was added successfully!'], 201);
+            return response()->json(['message' => 'User was added successfully!', 'type' => 'valid'], 201);
         } catch(\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }

@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Motorcycle;
 
-class Color extends Model
+class Image extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['color', 'motorcycle_id'];
+    protected $fillable = ['path', 'motorcycle_id'];
     
     public function motorcyle()
     {
