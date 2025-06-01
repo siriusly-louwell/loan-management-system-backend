@@ -43,14 +43,13 @@ class MotorcycleController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string',
                 'brand' => 'required|string',
-                // 'color' => 'required|string',
                 'description' => 'required|string',
                 'price' => 'required|numeric',
                 'quantity' => 'required|integer',
                 'interest' => 'required|integer',
                 'tenure' => 'required|integer',
                 'rebate' => 'required|numeric',
-                // 'file' => 'required|file|mimes:jpg,jpeg,png',
+                'downpayment' => 'required|numeric',
                 'files' => 'required|array',
                 'files.*' => 'required|file|mimes:jpg,jpeg,png',
                 'colors' => 'required|array',
@@ -65,14 +64,44 @@ class MotorcycleController extends Controller
             $motor = Motorcycle::create([
                 'name' => $validated['name'],
                 'brand' => $validated['brand'],
-                // 'color' => $validated['color'],
                 'price' => $validated['price'],
                 'description' => $validated['description'],
                 'quantity' => $validated['quantity'],
                 'rebate' => $validated['rebate'],
                 'tenure' => $validated['tenure'],
                 'interest' => $validated['interest'],
+                'downpayment' => $validated['downpayment'],
                 'file_path' => $images[0],
+                'engine' => $request->engine,
+                'compression' => $request->compression,
+                'displacement' => $request->displacement,
+                'horsepower' => $request->horsepower,
+                'torque' => $request->torque,
+                'fuel' => $request->fuel,
+                'drive' => $request->drive,
+                'transmission' => $request->transmission,
+                'cooling' => $request->cooling,
+                'front_suspension' => $request->front_suspension,
+                'rear_suspension' => $request->rear_suspension,
+                'frame' => $request->frame,
+                'travel' => $request->travel,
+                'swingarm' => $request->swingarm,
+                'dry_weight' => $request->dry_weight,
+                'wet_weight' => $request->wet_weight,
+                'seat' => $request->seat,
+                'wheelbase' => $request->wheelbase,
+                'fuel_tank' => $request->fuel_tank,
+                'clearance' => $request->clearance,
+                'tires' => $request->tires,
+                'wheel' => $request->wheel,
+                'brakes' => $request->brakes,
+                'abs' => $request->abs,
+                'traction' => $request->traction,
+                'tft' => $request->tft,
+                'lighting' => $request->lighting,
+                'ride_mode' => $request->ride_mode,
+                'quickshifter' => $request->quickshifter,
+                'cruise' => $request->cruise,
             ]);
 
             foreach ($validated['colors'] as $color) {
@@ -83,16 +112,9 @@ class MotorcycleController extends Controller
                 $motor->images()->create(['path' => $path]);
             }
         
-            return response()->json([
-                'message' => 'Product was created successfully!',
-                'paths' => $images
-            ], 201);
+            return response()->json(['message' => 'Product was created successfully!'], 201);
         } catch(\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'errors ' => $e->errors(),
-                'var_colors' => $request->colors,
-                'paths' => $images
-            ], 422);
+            return response()->json(['errors ' => $e->errors()], 422);
         }
     }
 
