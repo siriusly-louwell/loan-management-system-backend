@@ -51,10 +51,10 @@ return new class extends Migration
             $table->integer('children_num');
             $table->integer('children_dep');
             $table->string('school');
-            // $table->text('id_pic');
-            // $table->text('vaild_id');
-            // $table->text('residence_proof');
-            // $table->text('income_proof');
+            $table->text('id_pic');
+            $table->text('valid_id');
+            $table->text('residence_proof');
+            $table->text('income_proof');
             $table->timestamps();
         });
     }
