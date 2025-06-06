@@ -119,6 +119,8 @@ class ApplicationFormController extends Controller
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
                     'middle_name' => $request->middle_name,
+                    'contact_num' => $request->contact_num,
+                    'email' => $request->email,
                     'address_id' => $address->id,
                     'gender' => $request->gender,
                     'status' => $request->status,
@@ -156,7 +158,8 @@ class ApplicationFormController extends Controller
                 
                 return response()->json([
                     'message' => 'Account was created successfully!',
-                    'record_id' => $recordId
+                    'record_id' => $recordId,
+                    'contact' => $request->contact_num
                 ], 201);
             } catch(\Illuminate\Validation\ValidationException $e) {
                 return response()->json(['errors ' => $e->errors()], 422);

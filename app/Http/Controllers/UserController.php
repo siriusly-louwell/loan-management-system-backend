@@ -70,7 +70,7 @@ class UserController extends Controller
                 $user = User::create($arr);
             }
     
-            return response()->json(['message' => 'User was added successfully!', 'type' => 'valid'], 201);
+            return response()->json(['message' => 'Account was created successfully!', 'type' => 'valid'], 201);
         } catch(\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }
