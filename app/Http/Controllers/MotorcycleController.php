@@ -12,10 +12,13 @@ class MotorcycleController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         // return response()->json(Motorcycle::all());
-        $motorcycles = Motorcycle::with(['colors', 'images'])->get();
+        $motorcycles = $request->has('ids')
+            ? Motorcycle::with('colors')->whereIn('id', $request->input('ids'))->get()
+            : Motorcycle::with(['colors', 'images'])->get();
+
         return response()->json($motorcycles);
     }
 
