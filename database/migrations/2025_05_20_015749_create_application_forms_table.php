@@ -41,12 +41,12 @@ return new class extends Migration
             $table->string('employer');
             $table->decimal('salary');
             $table->string('business');
-            $table->decimal('living_exp');
-            $table->decimal('rental_exp');
-            $table->decimal('education_exp');
-            $table->decimal('transportation');
+            $table->decimal('living_exp', 20, 2);
+            $table->decimal('rental_exp', 20, 2);
+            $table->decimal('education_exp', 20, 2);
+            $table->decimal('transportation', 20, 2);
             $table->string('insurance');
-            $table->decimal('bills');
+            $table->decimal('bills', 20, 2);
             $table->string('spouse_name');
             $table->date('b_date');
             $table->string('spouse_work');

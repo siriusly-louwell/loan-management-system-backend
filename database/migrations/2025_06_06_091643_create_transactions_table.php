@@ -15,9 +15,9 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('application_id')->nullable()->constrained('application_forms')->onDelete('SET NULL');
-            $table->unsignedBigInteger('motorcycle_id');
-            $table->foreign('motorcycle_id')->references('id')->on('motorcycles');
+            $table->unsignedBigInteger('application_form_id');
+            $table->foreign('application_form_id')->references('id')->on('application_forms');
+            $table->foreignId('motorcycle_id')->nullable()->constrained('motorcycles')->onDelete('SET NULL');
             $table->string('color');
             $table->integer('tenure');
             $table->decimal('downpayment', 20, 2);

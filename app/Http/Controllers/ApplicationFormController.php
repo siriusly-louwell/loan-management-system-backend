@@ -156,8 +156,12 @@ class ApplicationFormController extends Controller
                     'income_proof' => $income_proof
                 ]);
 
+                // foreach ($request->transactions as $transaction) {
+                //     $application->transactions()->create($transaction);
+                // }
                 foreach ($request->transactions as $transaction) {
-                    $application->transactions()->create($transaction);
+                    $transactionData = json_decode($transaction, true);
+                    $application->transactions()->create($transactionData);
                 }
                 
                 return response()->json([
