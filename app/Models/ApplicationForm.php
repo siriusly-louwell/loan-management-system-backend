@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Address;
 use App\Models\User;
+use App\Models\Transaction;
 
 class ApplicationForm extends Model
 {
@@ -24,5 +25,10 @@ class ApplicationForm extends Model
 
     public function user() {
         return $this->belongsTo(User::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 }

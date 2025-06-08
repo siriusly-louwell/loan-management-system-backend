@@ -113,7 +113,7 @@ class ApplicationFormController extends Controller
                 }
 
                 $recordId = '2025-'. strtoupper(Str::random(8));
-                $motor = ApplicationForm::create([
+                $application = ApplicationForm::create([
                     'record_id' => $recordId,
                     'apply_status' => "pending",
                     'first_name' => $request->first_name,
@@ -155,6 +155,10 @@ class ApplicationFormController extends Controller
                     'residence_proof' => $residence_proof,
                     'income_proof' => $income_proof
                 ]);
+
+                foreach ($request->transactions as $transaction) {
+                    $application->transactions()->create($transaction);
+                }
                 
                 return response()->json([
                     'message' => 'Account was created successfully!',

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Color;
 use App\Models\Image;
+use App\Models\Transaction;
 
 class Motorcycle extends Model
 {
@@ -26,5 +27,10 @@ class Motorcycle extends Model
     public function images()
     {
         return $this->hasMany(Image::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 }
