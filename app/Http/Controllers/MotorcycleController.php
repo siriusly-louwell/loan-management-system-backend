@@ -129,7 +129,7 @@ class MotorcycleController extends Controller
      */
     public function show(Motorcycle $motorcycle)
     {
-        $motorcycle->load(['colors', 'images']); // eager load colors
+        $motorcycle->load(['colors', 'images']);
         return response()->json($motorcycle);
     }
 

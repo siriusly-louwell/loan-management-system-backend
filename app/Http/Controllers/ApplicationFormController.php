@@ -185,7 +185,7 @@ class ApplicationFormController extends Controller
      */
     public function show(ApplicationForm $application)
     {
-        return response()->json($application->load('address'));
+        return response()->json($application->load(['transactions.motorcycle', 'address']));
         // return response()->json(
         //     $application->load(['address', 'user'])
         // );
@@ -213,7 +213,9 @@ class ApplicationFormController extends Controller
     {
         try {
             $validated = $request->validate([
-                'apply_status' => 'required|string|max:255'
+                'apply_status' => 'required|string|max:255',
+                'ci_id' => 'required|integer',
+                'schedule' => 'required|string'
             ]);
 
             $application->update($validated);

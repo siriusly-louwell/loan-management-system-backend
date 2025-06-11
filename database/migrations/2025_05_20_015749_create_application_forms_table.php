@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('address_id');
             $table->foreign('address_id')->references('id')->on('addresses');
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('SET NULL');
+            $table->foreignId('ci_id')->nullable()->constrained('users')->onDelete('SET NULL');
             $table->string('record_id');
             $table->string('apply_status');
             $table->string('first_name');
@@ -57,6 +58,7 @@ return new class extends Migration
             $table->text('valid_id');
             $table->text('residence_proof');
             $table->text('income_proof');
+            $table->date('schedule')->nullable();
             $table->timestamps();
         });
     }
