@@ -183,12 +183,16 @@ class ApplicationFormController extends Controller
      * @param  \App\Models\ApplicationForm  $application
      * @return \Illuminate\Http\Response
      */
-    public function show(ApplicationForm $application)
+    public function show($value)
     {
-        return response()->json($application->load(['transactions.motorcycle', 'address']));
-        // return response()->json(
-        //     $application->load(['address', 'user'])
-        // );
+        // return response()->json($application->load(['transactions.motorcycle', 'address']));
+
+        // $key = request()->query('by') === 'record_id' ? 'record_id' : 'id';
+
+        $application = request()->query('by') === 'record_id' ? ApplicationForm::where('record_id', $value)->firstOrFail()
+            : ApplicationForm::where('id', $value)->with(['transactions.motorcycle', 'address'])->firstOrFail();
+
+        return response()->json($application);
     }
 
     /**
@@ -212,13 +216,12 @@ class ApplicationFormController extends Controller
     public function update(Request $request, ApplicationForm $application)
     {
         try {
-            $validated = $request->validate([
-                'apply_status' => 'required|string|max:255',
-                'ci_id' => 'required|integer',
-                'schedule' => 'required|string'
+            $application->update([
+                'apply_status' => $request->apply_status,
+                'ci_id' => $request->ci_id,
+                'from_sched' => $request->from_sched,
+                'to_sched' => $request->to_sched
             ]);
-
-            $application->update($validated);
 
             return response()->json([
                 'message' => 'Data updated successfully',

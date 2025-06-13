@@ -54,8 +54,6 @@ class UserController extends Controller
                 'status' => $validatedData['status'],
             ];
     
-            // var_dump($validatedData['role'] == 'customer');
-            // exit();
             if($validatedData['role'] == 'customer') {
                 $application = ApplicationForm::where('record_id', $request->record_id)->firstOrFail();
 
