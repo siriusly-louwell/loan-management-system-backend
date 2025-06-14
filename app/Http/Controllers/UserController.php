@@ -37,38 +37,65 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $user = [];
+
         try {
             $validatedData = $request->validate([
-                'name' => 'required|string',
+                'first_name' => 'required|string',
+                'last_name' => 'required|string',
+                'contact' => 'required|string',
                 'email' => 'required|email',
+                'gender' => 'required|string',
                 'password' => 'required|string',
                 'role' => 'required|string',
-                'status' => 'required|string'
+                'status' => 'required|string',
+                'pfp' => 'required|file|mimes:jpg,jpeg,png',
             ]);
 
+            if ($request->hasFile('pfp')) {
+                $pfp = $request->file('pfp')->store('uploads', 'public');
+            }
+
             $arr = [
-                'name' => $validatedData['name'],
+                'first_name' => $validatedData['first_name'],
+                'middle_name' => $request->middle_name,
+                'last_name' => $validatedData['last_name'],
+                'gender' => $validatedData['gender'],
+                'contact' => $validatedData['contact'],
                 'email' => $validatedData['email'],
                 'password' => Hash::make($validatedData['password']),
                 'role' => $validatedData['role'],
-                'status' => $validatedData['status'],
+                'status' => $validatedData['status']
             ];
     
             if($validatedData['role'] == 'customer') {
                 $application = ApplicationForm::where('record_id', $request->record_id)->firstOrFail();
 
-
                 if($application->apply_status == "approved") {
+                    $arr['pfp'] = $application->id_pic;
+                    $arr['first_name'] = $application->first_name;
+                    $arr['last_name'] = $application->last_name;
+                    $arr['gender'] = $application->gender;
+
                     $user = User::create($arr);
                     $application->user_id = $user->id;
                     $application->save();
                     
                 } else return response()->json(['message' => 'Your account is not approved yet', 'type' => 'invalid']);
             } else {
+                if ($request->hasFile('pfp')) {
+                    $pfp = $request->file('pfp')->store('uploads', 'public');
+                }
+
+                $arr['pfp'] = $pfp;
                 $user = User::create($arr);
             }
     
-            return response()->json(['message' => 'Account was created successfully!', 'type' => 'valid'], 201);
+            return response()->json([
+                'message' => 'Account was created successfully!',
+                'type' => 'valid',
+                'user' => $user,
+            ], 201);
         } catch(\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }
