@@ -43,25 +43,19 @@ class UserController extends Controller
             $validatedData = $request->validate([
                 'first_name' => 'required|string',
                 'last_name' => 'required|string',
-                'contact' => 'required|string',
                 'email' => 'required|email',
                 'gender' => 'required|string',
                 'password' => 'required|string',
                 'role' => 'required|string',
                 'status' => 'required|string',
-                'pfp' => 'required|file|mimes:jpg,jpeg,png',
             ]);
-
-            if ($request->hasFile('pfp')) {
-                $pfp = $request->file('pfp')->store('uploads', 'public');
-            }
 
             $arr = [
                 'first_name' => $validatedData['first_name'],
                 'middle_name' => $request->middle_name,
                 'last_name' => $validatedData['last_name'],
                 'gender' => $validatedData['gender'],
-                'contact' => $validatedData['contact'],
+                'contact' => $request->contact,
                 'email' => $validatedData['email'],
                 'password' => Hash::make($validatedData['password']),
                 'role' => $validatedData['role'],
@@ -73,8 +67,8 @@ class UserController extends Controller
 
                 if($application->apply_status == "approved") {
                     $arr['pfp'] = $application->id_pic;
-                    $arr['first_name'] = $application->first_name;
-                    $arr['last_name'] = $application->last_name;
+                    // $arr['first_name'] = $application->first_name;
+                    // $arr['last_name'] = $application->last_name;
                     $arr['gender'] = $application->gender;
 
                     $user = User::create($arr);

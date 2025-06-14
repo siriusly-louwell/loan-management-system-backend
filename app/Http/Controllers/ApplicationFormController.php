@@ -188,9 +188,9 @@ class ApplicationFormController extends Controller
         // return response()->json($application->load(['transactions.motorcycle', 'address']));
 
         // $key = request()->query('by') === 'record_id' ? 'record_id' : 'id';
-
-        $application = request()->query('by') === 'record_id' ? ApplicationForm::where('record_id', $value)->firstOrFail()
-            : ApplicationForm::where('id', $value)->with(['transactions.motorcycle', 'address'])->firstOrFail();
+        $application = request()->query('by') === 'id'
+            ? ApplicationForm::where('id', $value)->with(['transactions.motorcycle', 'address'])->firstOrFail()
+            : ApplicationForm::where(request()->query('by'), $value)->firstOrFail();
 
         return response()->json($application);
     }
