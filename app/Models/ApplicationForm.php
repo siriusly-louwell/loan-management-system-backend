@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Address;
 use App\Models\User;
+use App\Models\CiReport;
 use App\Models\Transaction;
 
 class ApplicationForm extends Model
@@ -30,5 +31,9 @@ class ApplicationForm extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function ciReport() {
+        return $this->hasOne(CiReport::class);
     }
 }

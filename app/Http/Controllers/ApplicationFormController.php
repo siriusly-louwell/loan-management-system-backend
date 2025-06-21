@@ -189,7 +189,7 @@ class ApplicationFormController extends Controller
 
         // $key = request()->query('by') === 'record_id' ? 'record_id' : 'id';
         $application = request()->query('by') === 'id'
-            ? ApplicationForm::where('id', $value)->with(['transactions.motorcycle', 'address'])->firstOrFail()
+            ? ApplicationForm::where('id', $value)->with(['transactions.motorcycle', 'address', 'ciReport'])->firstOrFail()
             : ApplicationForm::where(request()->query('by'), $value)->firstOrFail();
 
         return response()->json($application);
