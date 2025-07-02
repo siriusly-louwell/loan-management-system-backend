@@ -66,7 +66,7 @@ class CiReportController extends Controller
             $motor = CiReport::create($validated);
             $application = ApplicationForm::where('id', $request->application_id)->firstOrFail();
 
-            if($application->apply_status == "approved") {
+            if($application->apply_status == "accepted") {
                 $application->apply_status = "evaluated";
                 $application->save();
                     

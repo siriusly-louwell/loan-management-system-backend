@@ -8,6 +8,7 @@ use App\Models\Address;
 use App\Models\User;
 use App\Models\CiReport;
 use App\Models\Transaction;
+use App\Models\Payment;
 
 class ApplicationForm extends Model
 {
@@ -31,6 +32,11 @@ class ApplicationForm extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function payment()
+    {
+        return $this->hasMany(Payment::class);
     }
 
     public function ciReport() {

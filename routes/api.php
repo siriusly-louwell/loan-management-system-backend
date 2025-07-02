@@ -6,6 +6,7 @@ use App\Http\Controllers\MotorcycleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ApplicationFormController;
 use App\Http\Controllers\CiReportController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Api\Auth\LoginController;
 
 /*
@@ -30,4 +31,5 @@ Route::resource('motorcycle', MotorcycleController::class);
 Route::resource('account', UserController::class);
 Route::resource('application', ApplicationFormController::class);
 Route::resource('report', CiReportController::class);
+Route::resource('payment', PaymentController::class);
 Route::post('/login', [LoginController::class, 'login']);

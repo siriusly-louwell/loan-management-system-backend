@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('mother_last', 30);
             $table->text('comm_standing');
             $table->string('home_description');
-            $table->string('recommendation', 10);
+            $table->text('recommendation', 12);
             $table->text('remarks')->nullable();
             $table->string('first_unit', 30)->nullable();
             $table->text('sketch');
