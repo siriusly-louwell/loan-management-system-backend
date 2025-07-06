@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Route::post('/createmotor', function (Request $request) {
 //     return response()->json(['message' => 'Success']);
 // });
+Route::patch('/motorcycle/{motorcycle}', [MotorcycleController::class, 'update']);
 Route::resource('motorcycle', MotorcycleController::class);
 Route::resource('account', UserController::class);
 Route::resource('application', ApplicationFormController::class);

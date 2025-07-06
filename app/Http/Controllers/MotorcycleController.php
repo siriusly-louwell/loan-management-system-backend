@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Motorcycle;
+use App\Models\Image;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MotorcycleController extends Controller
 {
@@ -153,6 +155,7 @@ class MotorcycleController extends Controller
      */
     public function update(Request $request, Motorcycle $motorcycle)
     {
+        // return response()->json(['all' => $request->all()]);
         try {
             $validatedData = $request->validate([
                 'name' => 'sometimes|string',
@@ -160,13 +163,73 @@ class MotorcycleController extends Controller
                 'color' => 'sometimes|string',
                 'description' => 'sometimes|string',
                 'price' => 'sometimes|numeric',
-                'quantity' => 'sometimes|integer',
-                'file_path' => 'sometimes|string'
+                'rebate' => 'sometimes|numeric',
+                'downpayment' => 'sometimes|numeric',
+                'interest' => 'sometimes|integer',
+                'tenure' => 'sometimes|integer',
+                'file_path' => 'sometimes|string',
+                'engine' => 'sometimes|string',
+                'compression' => 'sometimes|string',
+                'displacement' => 'sometimes|string',
+                'horsepower' => 'sometimes|string',
+                'torque' => 'sometimes|string',
+                'fuel' => 'sometimes|string',
+                'drive' => 'sometimes|string',
+                'transmission' => 'sometimes|string',
+                'cooling' => 'sometimes|string',
+                'front_suspension' => 'sometimes|string',
+                'rear_suspension' => 'sometimes|string',
+                'frame' => 'sometimes|string',
+                'travel' => 'sometimes|string',
+                'swingarm' => 'sometimes|string',
+                'dry_weight' => 'sometimes|string',
+                'wet_weight' => 'sometimes|string',
+                'seat' => 'sometimes|string',
+                'wheelbase' => 'sometimes|string',
+                'fuel_tank' => 'sometimes|string',
+                'clearance' => 'sometimes|string',
+                'tires' => 'sometimes|string',
+                'wheel' => 'sometimes|string',
+                'brakes' => 'sometimes|string',
+                'abs' => 'sometimes|string',
+                'traction' => 'sometimes|string',
+                'tft' => 'sometimes|string',
+                'lighting' => 'sometimes|string',
+                'ride_mode' => 'sometimes|string',
+                'quickshifter' => 'sometimes|string',
+                'cruise' => 'sometimes|string',
+                'colors' => 'array',
+                'colors.*' => 'sometimes|string'
             ]);
+
+            $motorcycle->colors()->delete();
+
+            foreach ($request->colors as $color) {
+                $motorcycle->colors()->create(['color' => $color]); 
+            }
+
+            if($request->hasFile('files')) {
+                $images = Image::where('motorcycle_id', $motorcycle->id)->get();
+                
+                foreach($images as $image) {
+                    if ($image->path && Storage::disk('public')->exists($image->path)) {
+                        Storage::disk('public')->delete($image->path);
+                    }
+                }
+
+                $motorcycle->images()->delete();
+
+                foreach($request->file('files') as $key => $file) {
+                    $path = $file->store('uploads', 'public');
+                    $motorcycle->images()->create(['path' => $path]);
+
+                    if($key == 0)$validatedData['file_path'] = $path;
+                }
+            }
     
             $motorcycle->update($validatedData);
     
-            return response()->json(['message' => 'Product was created successfully!'], 201);
+            return response()->json(['message' => 'Unit was updated successfully!'], 201);
         } catch(\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }
