@@ -155,7 +155,6 @@ class MotorcycleController extends Controller
      */
     public function update(Request $request, Motorcycle $motorcycle)
     {
-        // return response()->json(['all' => $request->all()]);
         try {
             $validatedData = $request->validate([
                 'name' => 'sometimes|string',
@@ -163,6 +162,7 @@ class MotorcycleController extends Controller
                 'color' => 'sometimes|string',
                 'description' => 'sometimes|string',
                 'price' => 'sometimes|numeric',
+                'quantity' => 'sometimes|integer',
                 'rebate' => 'sometimes|numeric',
                 'downpayment' => 'sometimes|numeric',
                 'interest' => 'sometimes|integer',
@@ -202,10 +202,12 @@ class MotorcycleController extends Controller
                 'colors.*' => 'sometimes|string'
             ]);
 
-            $motorcycle->colors()->delete();
+            if($request->has('colors')) {
+                $motorcycle->colors()->delete();
 
-            foreach ($request->colors as $color) {
-                $motorcycle->colors()->create(['color' => $color]); 
+                foreach ($request->colors as $color) {
+                    $motorcycle->colors()->create(['color' => $color]); 
+                }
             }
 
             if($request->hasFile('files')) {
