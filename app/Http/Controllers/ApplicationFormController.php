@@ -191,12 +191,32 @@ class ApplicationFormController extends Controller
         // return response()->json($application->load(['transactions.motorcycle', 'address']));
 
         // $key = request()->query('by') === 'record_id' ? 'record_id' : 'id';
-        $application = request()->query('by') === 'id'
-            ? ApplicationForm::where('id', $value)->with(['transactions.motorcycle', 'address', 'ciReport'])->firstOrFail()
-            : (request()->query('stff') == 'record_id'
-                ? ApplicationForm::where(request()->query('by'), $value)->with('transactions.motorcycle')->firstOrFail()
-                : ApplicationForm::where(request()->query('by'), $value)->firstOrFail()
-            );
+        $by = request()->query('by');
+        $stff = request()->query('stff');
+
+        $query = ApplicationForm::query();
+
+        switch ($by) {
+            case 'id':
+                $application = $query->where('id', $value)
+                    ->with(['transactions.motorcycle', 'address', 'ciReport'])
+                    ->firstOrFail();
+                break;
+
+            case 'apply_status':
+                $application = $query->where('apply_status', $value)->get();
+                break;
+
+            default:
+                if ($stff === 'record_id') {
+                    $application = $query->where($by, $value)
+                        ->with('transactions.motorcycle')
+                        ->firstOrFail();
+                } else {
+                    $application = $query->where($by, $value)->firstOrFail();
+                }
+                break;
+        }
 
         return response()->json($application);
     }

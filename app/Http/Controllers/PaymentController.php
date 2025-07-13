@@ -15,7 +15,7 @@ class PaymentController extends Controller
      */
     public function index()
     {
-        //
+        return response()->json(Payment::all());
     }
 
     /**
@@ -63,9 +63,10 @@ class PaymentController extends Controller
      * @param  \App\Models\Payment  $payment
      * @return \Illuminate\Http\Response
      */
-    public function show(Payment $payment)
+    public function show($value)
     {
-        //
+        $payment = Payment::where('application_form_id', $value)->get();
+        return response()->json($payment);
     }
 
     /**
