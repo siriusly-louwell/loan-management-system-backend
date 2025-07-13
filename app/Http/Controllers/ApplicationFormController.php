@@ -115,7 +115,7 @@ class ApplicationFormController extends Controller
                 $recordId = '2025-'. strtoupper(Str::random(8));
                 $application = ApplicationForm::create([
                     'record_id' => $recordId,
-                    'apply_status' => "pending",
+                    'apply_status' => 'pending',
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
                     'middle_name' => $request->middle_name,
@@ -163,6 +163,9 @@ class ApplicationFormController extends Controller
                     $transactionData = json_decode($transaction, true);
                     $application->transactions()->create($transactionData);
                 }
+
+                $application->load('transactions.motorcycle');
+                $application->update(['apply_status' => $this->eligibility($application)]);
                 
                 return response()->json([
                     'message' => 'Account was created successfully!',
@@ -244,5 +247,55 @@ class ApplicationFormController extends Controller
     public function destroy(ApplicationForm $application)
     {
         //
+    }
+
+    private function empStability(float $rate, int $years): string
+    {
+        $inc = $rate >= 15000;
+        $year = $years >= 1;
+
+        return $inc && $year ? 'green' : ($inc || $year ? 'yellow' : 'red');
+    }
+
+    private function debtStability(float $loans, float $rent, float $amortization, float $rate): string
+    {
+        $dti = (($rent + $amortization + $loans) / $rate) * 100;
+
+        return $dti <= 35 ? 'green' : ($dti > 35 && $dti < 46 ? 'yellow' : 'red');
+    }
+
+    private function ndiStability(float $loans, float $rate, float $rent, float $amortization, float $bills, float $living_exp, float $education_exp, float $transportation): string
+    {
+        $ndi = $rate - ($rent + $amortization + $bills + $living_exp + $education_exp + $transportation);
+        $ndiBool = $loans / $ndi;
+
+        return $ndiBool <= 0.3 ? 'green' : ($ndiBool > 0.3 && $ndiBool < 0.41 ? 'yellow' : 'red');
+    }
+
+    private function eligibility($arr): string
+    {
+        $loans = 0;
+        $counts = ['green' => 0, 'yellow' => 0, 'red' => 0];
+
+        foreach($arr->transactions as $unit) {
+            $tenure = $unit->tenure * 12;
+            $loanAmount = $unit->motorcycle->price - $unit->downpayment;
+            $monthlyRate = $unit->motorcycle->interest / 12 / 100;
+            $emi = $monthlyRate == 0 ? $loanAmount / $tenure
+                : ($loanAmount * $monthlyRate * pow(1 + $monthlyRate, $tenure)) / (pow(1 + $monthlyRate, $tenure) - 1);
+
+            $loans += $emi;
+        }
+
+        $empStability = $this->empStability($arr->rate, $arr->yrs_in_service);
+        $debtStability = $this->debtStability($loans, $arr->rent, $arr->amortization, $arr->rate);
+        $ndiStability = $this->ndiStability($loans, $arr->rate, $arr->rent, $arr->amortization, $arr->bills, $arr->living_exp, $arr->education_exp, $arr->transportation);
+
+        foreach([$empStability, $debtStability, $ndiStability] as $i) {
+            $counts[$i]++;
+        }
+
+        return ($counts['green'] === 3 || ($counts['green'] === 2 && $counts['yellow'] === 1) || ($counts['green'] === 1 && $counts['yellow'] === 2)) ? 'accepted'
+            : (($counts['red'] === 3 || ($counts['red'] === 2 && $counts['yellow'] === 1) || ($counts['red'] === 1 && $counts['yellow'] === 2)) ? 'denied' : 'pending');
     }
 }
