@@ -224,9 +224,7 @@ class ApplicationFormController extends Controller
         try {
             $application->update([
                 'apply_status' => $request->apply_status,
-                'ci_id' => $request->ci_id,
-                'from_sched' => $request->from_sched,
-                'to_sched' => $request->to_sched
+                'ci_id' => $request->ci_id
             ]);
 
             return response()->json([
