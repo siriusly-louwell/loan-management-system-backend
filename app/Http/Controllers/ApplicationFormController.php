@@ -164,8 +164,8 @@ class ApplicationFormController extends Controller
                     $application->transactions()->create($transactionData);
                 }
 
-                $application->load('transactions.motorcycle');
-                $application->update(['apply_status' => $this->eligibility($application)]);
+                // $application->load('transactions.motorcycle');
+                // $application->update(['apply_status' => $this->eligibility($application)]);
                 
                 return response()->json([
                     'message' => 'Account was created successfully!',
