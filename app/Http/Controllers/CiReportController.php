@@ -62,6 +62,7 @@ class CiReportController extends Controller
             $validated['first_unit'] = $request->first_unit;
             $validated['delivered'] = $request->delivered;
             $validated['outlet'] = $request->outlet;
+            $validated['sketch'] = $sketch;
 
             $motor = CiReport::create($validated);
             $application = ApplicationForm::where('id', $request->application_id)->firstOrFail();
