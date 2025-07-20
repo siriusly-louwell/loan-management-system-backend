@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('record_id');
             $table->string('apply_status');
             $table->string('first_name');
-            $table->string('middle_name');
+            $table->string('middle_name')->nullable();
             $table->string('last_name');
             $table->string('contact_num', 15);
             $table->string('email')->nullable();
@@ -38,15 +38,15 @@ return new class extends Migration
             $table->string('superior')->nullable();
             $table->string('employment_status')->nullable();
             $table->integer('yrs_in_service')->nullable();
-            $table->string('rate');
+            $table->decimal('rate', 30, 2);
             $table->string('employer')->nullable();
-            $table->decimal('salary');
+            $table->decimal('salary', 30, 2);
             $table->string('business');
             $table->decimal('living_exp', 20, 2);
             $table->decimal('rental_exp', 20, 2);
             $table->decimal('education_exp', 20, 2);
             $table->decimal('transportation', 20, 2);
-            $table->string('insurance');
+            $table->decimal('insurance', 20, 2);
             $table->decimal('bills', 20, 2);
             $table->string('spouse_name')->nullable();
             $table->date('b_date')->nullable();
