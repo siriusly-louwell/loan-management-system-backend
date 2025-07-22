@@ -19,9 +19,9 @@ return new class extends Migration
             $table->text('personal_prev');
             $table->text('parent_pres');
             $table->text('parent_prev');
-            $table->text('spouse_pres');
-            $table->text('spouse_prev');
-            $table->text('employer_address');
+            $table->text('spouse_pres')->nullable();
+            $table->text('spouse_prev')->nullable();
+            $table->text('employer_address')->nullable();
             $table->timestamps();
         });
     }
