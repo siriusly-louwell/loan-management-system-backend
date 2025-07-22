@@ -111,6 +111,9 @@ class ApplicationFormController extends Controller
                 if ($request->hasFile('income_proof')) {
                     $income_proof = $request->file('income_proof')->store('uploads', 'public');
                 }
+                if ($request->hasFile('sketch')) {
+                    $sketch = $request->file('sketch')->store('uploads', 'public');
+                }
 
                 $recordId = '2025-'. strtoupper(Str::random(8));
                 $application = ApplicationForm::create([
@@ -130,6 +133,16 @@ class ApplicationFormController extends Controller
                     'rent' => $request->rent,
                     'sss' => $request->sss,
                     'tin' => $request->tin,
+                    'birth_day' => $request->birth_day,
+                    'birth_place' => $request->birth_place,
+                    'father_first' => $request->father_first,
+                    'father_middle' => $request->father_middle,
+                    'father_last' => $request->father_last,
+                    'mother_first' => $request->mother_first,
+                    'mother_middle' => $request->mother_middle,
+                    'mother_last' => $request->mother_last,
+                    'comm_standing' => $request->comm_standing,
+                    'home_description' => $request->home_description,
                     'income' => $request->income,
                     'superior' => $request->superior,
                     'employment_status' => $request->employment_status,
@@ -153,7 +166,8 @@ class ApplicationFormController extends Controller
                     'valid_id'=> $valid_id,
                     'id_pic' => $id_pic,
                     'residence_proof' => $residence_proof,
-                    'income_proof' => $income_proof
+                    'income_proof' => $income_proof,
+                    'sketch' => $sketch
                 ]);
 
                 // foreach ($request->transactions as $transaction) {

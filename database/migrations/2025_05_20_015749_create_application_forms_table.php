@@ -34,6 +34,16 @@ return new class extends Migration
             $table->decimal('rent', 20, 2)->nullable();
             $table->string('sss')->nullable();
             $table->string('tin')->nullable();
+            $table->text('birth_day');
+            $table->string('birth_place', 100);
+            $table->string('father_first', 30);
+            $table->string('father_middle', 20);
+            $table->string('father_last', 30);
+            $table->string('mother_first', 30);
+            $table->string('mother_middle', 20);
+            $table->string('mother_last', 30);
+            $table->text('comm_standing');
+            $table->string('home_description');
             $table->string('income');
             $table->string('superior')->nullable();
             $table->string('employment_status')->nullable();
@@ -58,6 +68,7 @@ return new class extends Migration
             $table->text('valid_id');
             $table->text('residence_proof');
             $table->text('income_proof');
+            $table->text('sketch');
             $table->date('from_sched')->nullable();
             $table->date('to_sched')->nullable();
             $table->timestamps();
