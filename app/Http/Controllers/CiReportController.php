@@ -38,23 +38,23 @@ class CiReportController extends Controller
     public function store(Request $request)
     {
         try {
-            $validated = $request->validate([
-                'birth_day' => 'required|string',
-                'birth_place' => 'required|string',
-                'father_first' => 'required|string',
-                'father_middle' => 'required|string',
-                'father_last' => 'required|string',
-                'mother_first' => 'required|string',
-                'mother_middle' => 'required|string',
-                'mother_last' => 'required|string',
-                'comm_standing' => 'required|string',
-                'home_description' => 'required|string',
-                'sketch' => 'required|file|mimes:jpg,jpeg,png',
-            ]);
+            // $validated = $request->validate([
+            //     'birth_day' => 'required|string',
+            //     'birth_place' => 'required|string',
+            //     'father_first' => 'required|string',
+            //     'father_middle' => 'required|string',
+            //     'father_last' => 'required|string',
+            //     'mother_first' => 'required|string',
+            //     'mother_middle' => 'required|string',
+            //     'mother_last' => 'required|string',
+            //     'comm_standing' => 'required|string',
+            //     'home_description' => 'required|string',
+            //     'sketch' => 'required|file|mimes:jpg,jpeg,png',
+            // ]);
 
-            if ($request->hasFile('sketch')) {
-                $sketch = $request->file('sketch')->store('uploads', 'public');
-            }
+            // if ($request->hasFile('sketch')) {
+            //     $sketch = $request->file('sketch')->store('uploads', 'public');
+            // }
 
             $validated['application_form_id'] = $request->application_id;
             $validated['recommendation'] = $request->recommendation;
@@ -62,7 +62,7 @@ class CiReportController extends Controller
             $validated['first_unit'] = $request->first_unit;
             $validated['delivered'] = $request->delivered;
             $validated['outlet'] = $request->outlet;
-            $validated['sketch'] = $sketch;
+            // $validated['sketch'] = $sketch;
 
             $motor = CiReport::create($validated);
             $application = ApplicationForm::where('id', $request->application_id)->firstOrFail();
