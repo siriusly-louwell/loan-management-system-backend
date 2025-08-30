@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\ApplicationForm;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -61,11 +62,11 @@ class UserController extends Controller
                 'role' => $validatedData['role'],
                 'status' => $validatedData['status']
             ];
-    
-            if($validatedData['role'] == 'customer') {
+
+            if ($validatedData['role'] == 'customer') {
                 $application = ApplicationForm::where('record_id', $request->record_id)->firstOrFail();
 
-                if($application->apply_status == "approved") {
+                if ($application->apply_status == "approved") {
                     $arr['pfp'] = $application->id_pic;
                     // $arr['first_name'] = $application->first_name;
                     // $arr['last_name'] = $application->last_name;
@@ -74,7 +75,6 @@ class UserController extends Controller
                     $user = User::create($arr);
                     $application->user_id = $user->id;
                     $application->save();
-                    
                 } else return response()->json(['message' => 'Your account is not approved yet', 'type' => 'invalid']);
             } else {
                 if ($request->hasFile('pfp')) {
@@ -84,13 +84,13 @@ class UserController extends Controller
                 $arr['pfp'] = $pfp;
                 $user = User::create($arr);
             }
-    
+
             return response()->json([
                 'message' => 'Account was created successfully!',
                 'type' => 'valid',
                 'user' => $user,
             ], 201);
-        } catch(\Illuminate\Validation\ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }
     }
@@ -104,6 +104,11 @@ class UserController extends Controller
     public function show(User $user)
     {
         return response()->json($user);
+    }
+
+    public function account(Request $request)
+    {
+        return response()->json(Auth::user());
     }
 
     /**
@@ -136,11 +141,11 @@ class UserController extends Controller
                 'quantity' => 'sometimes|integer',
                 'file_path' => 'sometimes|string'
             ]);
-    
-            $motorcycle->update($validatedData);
-    
+
+            // $motorcycle->update($validatedData);
+
             return response()->json(['message' => 'Product was created successfully!'], 201);
-        } catch(\Illuminate\Validation\ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }
     }
