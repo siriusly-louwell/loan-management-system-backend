@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
@@ -20,23 +21,22 @@ class LoginController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Invalid input.',
+                'type' => 'input',
                 'errors' => $validator->errors()
-            ], 422);
+            ]);
         }
 
         // Attempt authentication
         if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Invalid credentials.'
-            ], 401);
+            return response()->json(['type' => 'credentials']);
         }
 
         $user = Auth::user();
         $token = $user->createToken('react-app-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Login successful.',
+            'message' => 'Login Successful',
+            'type' => 'success',
             'role' => $user->role,
             'user' => $user,
             'token' => $token
