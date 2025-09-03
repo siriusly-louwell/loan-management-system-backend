@@ -21,6 +21,7 @@ class LoginController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Invalid input.',
+                'type' => 'input',
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -28,8 +29,9 @@ class LoginController extends Controller
         // Attempt authentication
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
-                'message' => 'Invalid credentials.'
-            ], 401);
+                'message' => 'Invalid credentials.',
+                'type' => 'credentials'
+            ]);
         }
 
         $user = Auth::user();
@@ -37,6 +39,7 @@ class LoginController extends Controller
 
         return response()->json([
             'message' => 'Login successful.',
+            'type' => 'success',
             'role' => $user->role,
             'user' => $user,
             'token' => $token
