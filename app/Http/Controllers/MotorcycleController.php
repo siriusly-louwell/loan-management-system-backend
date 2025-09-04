@@ -61,7 +61,7 @@ class MotorcycleController extends Controller
                 'colors.*' => 'required|string',
             ]);
 
-            foreach($request->file('files') as $file) {
+            foreach ($request->file('files') as $file) {
                 $path = $file->store('uploads', 'public');
                 $images[] = $path;
             }
@@ -116,10 +116,17 @@ class MotorcycleController extends Controller
             foreach ($images as $path) {
                 $motor->images()->create(['path' => $path]);
             }
-        
-            return response()->json(['message' => 'Product was created successfully!'], 201);
-        } catch(\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['errors ' => $e->errors()], 422);
+
+            return response()->json([
+                'message' => 'Unit was created successfully!',
+                'type' => 'success'
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Failed to save data',
+                'type' => 'error',
+                'errors ' => $e->errors()
+            ], 422);
         }
     }
 
@@ -202,18 +209,18 @@ class MotorcycleController extends Controller
                 'colors.*' => 'sometimes|string'
             ]);
 
-            if($request->has('colors')) {
+            if ($request->has('colors')) {
                 $motorcycle->colors()->delete();
 
                 foreach ($request->colors as $color) {
-                    $motorcycle->colors()->create(['color' => $color]); 
+                    $motorcycle->colors()->create(['color' => $color]);
                 }
             }
 
-            if($request->hasFile('files')) {
+            if ($request->hasFile('files')) {
                 $images = Image::where('motorcycle_id', $motorcycle->id)->get();
-                
-                foreach($images as $image) {
+
+                foreach ($images as $image) {
                     if ($image->path && Storage::disk('public')->exists($image->path)) {
                         Storage::disk('public')->delete($image->path);
                     }
@@ -221,18 +228,18 @@ class MotorcycleController extends Controller
 
                 $motorcycle->images()->delete();
 
-                foreach($request->file('files') as $key => $file) {
+                foreach ($request->file('files') as $key => $file) {
                     $path = $file->store('uploads', 'public');
                     $motorcycle->images()->create(['path' => $path]);
 
-                    if($key == 0)$validatedData['file_path'] = $path;
+                    if ($key == 0) $validatedData['file_path'] = $path;
                 }
             }
-    
+
             $motorcycle->update($validatedData);
-    
+
             return response()->json(['message' => 'Unit was updated successfully!'], 201);
-        } catch(\Illuminate\Validation\ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }
     }
