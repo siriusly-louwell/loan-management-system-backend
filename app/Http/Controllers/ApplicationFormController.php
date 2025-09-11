@@ -62,39 +62,39 @@ class ApplicationFormController extends Controller
                     'spouse_prev' => $request->spouse_prev,
                     'employer_address' => $request->employer_address,
                 ]);
-                
+
                 // $validatedData = $request->validate([
-                    // 'first_name' => 'required|string',
-                    // 'last_name' => 'required|string',
-                    // 'middle_name' => 'required|string',
-                    // 'gender' => 'required|string',
-                    // 'status' => 'required|string',
-                    // 'educ_attain' => 'required|string',
-                    // 'residence' => 'required|string',
-                    // 'amortization' => 'required|numeric',
-                    // 'rent' => 'required|numeric',
-                    // 'sss' => 'required|string',
-                    // 'tin' => 'required|string',
-                    // 'income' => 'required|string',
-                    // 'superior' => 'required|string',
-                    // 'employment_status' => 'required|string',
-                    // 'yrs_in_service' => 'required|integer',
-                    // 'rate' => 'required|string',
-                    // 'employer' => 'required|string',
-                    // 'salary' => 'required|string',
-                    // 'business' => 'required|string',
-                    // 'living_exp' => 'required|string',
-                    // 'rental_exp' => 'required|string',
-                    // 'education_exp' => 'required|string',
-                    // 'transportation' => 'required|string',
-                    // 'insurance' => 'required|string',
-                    // 'bills' => 'required|string',
-                    // 'spouse_name' => 'required|string',
-                    // 'b_date' => 'required|string',
-                    // 'spouse_work' => 'required|string',
-                    // 'children_num' => 'required|string',
-                    // 'children_dep' => 'required|string',
-                    // 'school' => 'required|string'
+                // 'first_name' => 'required|string',
+                // 'last_name' => 'required|string',
+                // 'middle_name' => 'required|string',
+                // 'gender' => 'required|string',
+                // 'status' => 'required|string',
+                // 'educ_attain' => 'required|string',
+                // 'residence' => 'required|string',
+                // 'amortization' => 'required|numeric',
+                // 'rent' => 'required|numeric',
+                // 'sss' => 'required|string',
+                // 'tin' => 'required|string',
+                // 'income' => 'required|string',
+                // 'superior' => 'required|string',
+                // 'employment_status' => 'required|string',
+                // 'yrs_in_service' => 'required|integer',
+                // 'rate' => 'required|string',
+                // 'employer' => 'required|string',
+                // 'salary' => 'required|string',
+                // 'business' => 'required|string',
+                // 'living_exp' => 'required|string',
+                // 'rental_exp' => 'required|string',
+                // 'education_exp' => 'required|string',
+                // 'transportation' => 'required|string',
+                // 'insurance' => 'required|string',
+                // 'bills' => 'required|string',
+                // 'spouse_name' => 'required|string',
+                // 'b_date' => 'required|string',
+                // 'spouse_work' => 'required|string',
+                // 'children_num' => 'required|string',
+                // 'children_dep' => 'required|string',
+                // 'school' => 'required|string'
                 // ]);
 
                 if ($request->hasFile('valid_id')) {
@@ -115,7 +115,7 @@ class ApplicationFormController extends Controller
                     $sketch = $request->file('sketch')->store('uploads', 'public');
                 }
 
-                $recordId = '2025-'. strtoupper(Str::random(8));
+                $recordId = '2025-' . strtoupper(Str::random(8));
                 $application = ApplicationForm::create([
                     'record_id' => $recordId,
                     'apply_status' => 'pending',
@@ -163,7 +163,7 @@ class ApplicationFormController extends Controller
                     'children_num' => $request->children_num,
                     'children_dep' => $request->children_dep,
                     'school' => $request->school,
-                    'valid_id'=> $valid_id,
+                    'valid_id' => $valid_id,
                     'id_pic' => $id_pic,
                     'residence_proof' => $residence_proof,
                     'income_proof' => $income_proof,
@@ -173,20 +173,24 @@ class ApplicationFormController extends Controller
                 // foreach ($request->transactions as $transaction) {
                 //     $application->transactions()->create($transaction);
                 // }
-                foreach ($request->transactions as $transaction) {
-                    $transactionData = json_decode($transaction, true);
-                    $application->transactions()->create($transactionData);
-                }
+                // foreach ($request->transactions as $transaction) {
+                //     $transactionData = json_decode($transaction, true);
+                //     $application->transactions()->create($transactionData);
+                // }
+
+                $transactionData = json_decode($request->transaction, true);
+                $application->transactions()->create($transactionData);
 
                 // $application->load('transactions.motorcycle');
                 // $application->update(['apply_status' => $this->eligibility($application)]);
-                
+
                 return response()->json([
-                    'message' => 'Account was created successfully!',
+                    'message' => 'Application was submitted successfully!',
+                    'type' => "success",
                     'record_id' => $recordId,
                     'contact' => $request->contact_num
                 ], 201);
-            } catch(\Illuminate\Validation\ValidationException $e) {
+            } catch (\Illuminate\Validation\ValidationException $e) {
                 return response()->json(['errors ' => $e->errors()], 422);
             }
         });
@@ -265,7 +269,7 @@ class ApplicationFormController extends Controller
                 'message' => 'Data updated successfully',
                 'data' => $application
             ]);
-        } catch(\Illuminate\Validation\ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }
     }
@@ -309,7 +313,7 @@ class ApplicationFormController extends Controller
         $loans = 0;
         $counts = ['green' => 0, 'yellow' => 0, 'red' => 0];
 
-        foreach($arr->transactions as $unit) {
+        foreach ($arr->transactions as $unit) {
             $tenure = $unit->tenure * 12;
             $loanAmount = $unit->motorcycle->price - $unit->downpayment;
             $monthlyRate = $unit->motorcycle->interest / 12 / 100;
@@ -323,7 +327,7 @@ class ApplicationFormController extends Controller
         $debtStability = $this->debtStability($loans, $arr->rent, $arr->amortization, $arr->rate);
         $ndiStability = $this->ndiStability($loans, $arr->rate, $arr->rent, $arr->amortization, $arr->bills, $arr->living_exp, $arr->education_exp, $arr->transportation);
 
-        foreach([$empStability, $debtStability, $ndiStability] as $i) {
+        foreach ([$empStability, $debtStability, $ndiStability] as $i) {
             $counts[$i]++;
         }
 
