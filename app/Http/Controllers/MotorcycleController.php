@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Motorcycle;
 use App\Models\Image;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class MotorcycleController extends Controller
@@ -217,28 +218,66 @@ class MotorcycleController extends Controller
                 }
             }
 
-            if ($request->hasFile('files')) {
-                $images = Image::where('motorcycle_id', $motorcycle->id)->get();
+            if ($request->has('files')) {
+                $fileStats = $request->fileStats;
 
-                foreach ($images as $image) {
-                    if ($image->path && Storage::disk('public')->exists($image->path)) {
-                        Storage::disk('public')->delete($image->path);
+                foreach ((array)$request->files('files') as $index => $imgData) {
+                    // ? Case 1: Delete
+                    if ($fileStats['status'] === 'delete' && isset($fileStats['id'])) {
+                        $image = Image::where('id', $imgData['id'])
+                            ->where('motorcycle_id', $motorcycle->id)
+                            ->first();
+
+                        if ($image) {
+                            if ($image->path && Storage::disk('public')->exists($image->path)) {
+                                Storage::disk('public')->delete($image->path);
+                            }
+                            $image->delete();
+                        }
                     }
-                }
 
-                $motorcycle->images()->delete();
+                    // ? Case 2: New Upload
+                    if ($fileStats['status'] === 'new' && $imgData instanceof \Illuminate\Http\UploadedFile) {
+                        Log::info("reached");
 
-                foreach ($request->file('files') as $key => $file) {
-                    $path = $file->store('uploads', 'public');
-                    $motorcycle->images()->create(['path' => $path]);
+                        $file = $request->file("files.$index");
+                        $path = $file->store('uploads', 'public');
 
-                    if ($key == 0) $validatedData['file_path'] = $path;
+                        Log::info($file, $path);
+                        $motorcycle->images()->create(['path' => $path]);
+
+                        if ($index == 0) {
+                            $validatedData['file_path'] = $path;
+                        }
+                    }
                 }
             }
 
+            // if ($request->hasFile('files')) {
+            //     $images = Image::where('motorcycle_id', $motorcycle->id)->get();
+
+            //     foreach ($images as $image) {
+            //         if ($image->path && Storage::disk('public')->exists($image->path)) {
+            //             Storage::disk('public')->delete($image->path);
+            //         }
+            //     }
+
+            //     $motorcycle->images()->delete();
+
+            //     foreach ($request->file('files') as $key => $file) {
+            //         $path = $file->store('uploads', 'public');
+            //         $motorcycle->images()->create(['path' => $path]);
+
+            //         if ($key == 0) $validatedData['file_path'] = $path;
+            //     }
+            // }
+
             $motorcycle->update($validatedData);
 
-            return response()->json(['message' => 'Unit was updated successfully!'], 201);
+            return response()->json([
+                'message' => 'Unit was updated successfully!',
+                'type' => 'success'
+            ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }
