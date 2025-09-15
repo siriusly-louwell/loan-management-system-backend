@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Motorcycle;
 use App\Models\Image;
+use Hamcrest\Arrays\IsArray;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -219,11 +220,13 @@ class MotorcycleController extends Controller
             }
 
             if ($request->has('files')) {
-                $fileStats = $request->fileStats;
+                $fileStats = json_decode($request->fileStats, true);
+                
+                Log::info($fileStats, $request->file('files'));
 
-                foreach ((array)$request->files('files') as $index => $imgData) {
+                foreach ((array) $request->file('files') as $index => $imgData) {
                     // ? Case 1: Delete
-                    if ($fileStats['status'] === 'delete' && isset($fileStats['id'])) {
+                    if ($fileStats[$index]['status'] === 'delete' && isset($fileStats[$index]['id'])) {
                         $image = Image::where('id', $imgData['id'])
                             ->where('motorcycle_id', $motorcycle->id)
                             ->first();
@@ -237,7 +240,7 @@ class MotorcycleController extends Controller
                     }
 
                     // ? Case 2: New Upload
-                    if ($fileStats['status'] === 'new' && $imgData instanceof \Illuminate\Http\UploadedFile) {
+                    if ($fileStats[$index]['status'] === 'new' && $imgData instanceof \Illuminate\Http\UploadedFile) {
                         Log::info("reached");
 
                         $file = $request->file("files.$index");
