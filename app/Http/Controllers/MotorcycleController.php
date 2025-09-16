@@ -221,9 +221,6 @@ class MotorcycleController extends Controller
 
             if ($request->has('files')) {
                 $fileStats = json_decode($request->fileStats, true);
-                $arr = (array) $request->file("files");
-
-                Log::info($arr);
 
                 foreach ((array) $request->file('files') as $index => $imgData) {
                     // ? Case 1: Delete
@@ -240,8 +237,6 @@ class MotorcycleController extends Controller
                         }
                     }
 
-                    // Log::info("inside: ", $imgData);
-
                     // ? Case 2: New Upload
                     if ($fileStats[$index]['status'] === 'new' && $imgData instanceof \Illuminate\Http\UploadedFile) {
                         Log::info("reached");
@@ -249,7 +244,6 @@ class MotorcycleController extends Controller
                         $file = $request->file("files.$index");
                         $path = $file->store('uploads', 'public');
 
-                        // Log::info($request->file("files.$index"), $file);
                         $motorcycle->images()->create(['path' => $path]);
 
                         if ($index == 0) {
@@ -258,25 +252,6 @@ class MotorcycleController extends Controller
                     }
                 }
             }
-
-            // if ($request->hasFile('files')) {
-            //     $images = Image::where('motorcycle_id', $motorcycle->id)->get();
-
-            //     foreach ($images as $image) {
-            //         if ($image->path && Storage::disk('public')->exists($image->path)) {
-            //             Storage::disk('public')->delete($image->path);
-            //         }
-            //     }
-
-            //     $motorcycle->images()->delete();
-
-            //     foreach ($request->file('files') as $key => $file) {
-            //         $path = $file->store('uploads', 'public');
-            //         $motorcycle->images()->create(['path' => $path]);
-
-            //         if ($key == 0) $validatedData['file_path'] = $path;
-            //     }
-            // }
 
             $motorcycle->update($validatedData);
 
