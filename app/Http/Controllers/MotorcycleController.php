@@ -221,8 +221,9 @@ class MotorcycleController extends Controller
 
             if ($request->has('files')) {
                 $fileStats = json_decode($request->fileStats, true);
-                
-                Log::info($fileStats, $request->file('files'));
+                $arr = (array) $request->file("files");
+
+                Log::info($arr);
 
                 foreach ((array) $request->file('files') as $index => $imgData) {
                     // ? Case 1: Delete
@@ -239,6 +240,8 @@ class MotorcycleController extends Controller
                         }
                     }
 
+                    // Log::info("inside: ", $imgData);
+
                     // ? Case 2: New Upload
                     if ($fileStats[$index]['status'] === 'new' && $imgData instanceof \Illuminate\Http\UploadedFile) {
                         Log::info("reached");
@@ -246,7 +249,7 @@ class MotorcycleController extends Controller
                         $file = $request->file("files.$index");
                         $path = $file->store('uploads', 'public');
 
-                        Log::info($file, $path);
+                        // Log::info($request->file("files.$index"), $file);
                         $motorcycle->images()->create(['path' => $path]);
 
                         if ($index == 0) {
