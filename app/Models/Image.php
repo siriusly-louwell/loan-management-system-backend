@@ -14,6 +14,6 @@ class Image extends Model
     
     public function motorcyle()
     {
-        return $this->belongsTo(Motorcyle::class);
+        return $this->belongsTo(Motorcycle::class);
     }
 }
