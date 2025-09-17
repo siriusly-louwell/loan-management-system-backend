@@ -220,7 +220,6 @@ class MotorcycleController extends Controller
             }
 
             if ($request->has('deletes')) {
-                Log::info($request->deletes);
                 foreach ($request->deletes as $id) {
                     $image = Image::where('id', $id)
                         ->where('motorcycle_id', $motorcycle->id)
@@ -232,11 +231,15 @@ class MotorcycleController extends Controller
 
                         $image->delete();
                     }
+
+                    $motorImg = $motorcycle->images()->first();
+
+                    if ($motorImg) $validatedData['file_path'] = $motorImg->path;
+                    else $validatedData['file_path'] = 'motor_icon';
                 }
             }
 
             if ($request->has('news')) {
-                Log::info($request->file('news'));
                 foreach ((array) $request->file('news') as $index => $imgData) {
                     $file = $request->file("news.$index");
                     $path = $file->store('uploads', 'public');

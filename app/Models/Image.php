@@ -10,9 +10,9 @@ class Image extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['path', 'motorcycle_id'];
-    
-    public function motorcyle()
+    protected $fillable = ['path', 'motorcycle_id', 'quantity'];
+
+    public function motorcycle()
     {
         return $this->belongsTo(Motorcycle::class);
     }
