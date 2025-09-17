@@ -219,41 +219,69 @@ class MotorcycleController extends Controller
                 }
             }
 
-            if ($request->has('files') || $request->has("fileStats")) {
-                $fileStats = json_decode($request->fileStats, true);
-                $files = (array) $request->file("files");
+            if ($request->has('deletes')) {
+                Log::info($request->deletes);
+                foreach ($request->deletes as $id) {
+                    $image = Image::where('id', $id)
+                        ->where('motorcycle_id', $motorcycle->id)
+                        ->first();
 
-                Log::info($request->file("files"));
-                Log::info($fileStats);
+                    if ($image) {
+                        if ($image->path && Storage::disk('public')->exists($image->path))
+                            Storage::disk('public')->delete($image->path);
 
-                foreach ($fileStats as $index => $stat) {                    
-                    // ? Case 1: Delete
-                    if ($stat['status'] === 'delete' && isset($stat['id'])) {
-                        $image = Image::where('id', $stat['id'])
-                            ->where('motorcycle_id', $motorcycle->id)
-                            ->first();
-
-                            Log::info($image);
-
-                        if ($image) {
-                            if ($image->path && Storage::disk('public')->exists($image->path))
-                                Storage::disk('public')->delete($image->path);
-
-                            $image->delete();
-                        }
+                        $image->delete();
                     }
-
-                    // ? Case 2: New Upload
-                    if ($stat['status'] === 'new' && $files[$index] instanceof \Illuminate\Http\UploadedFile) {
-                        $file = $request->file("files.$index");
-                        $path = $file->store('uploads', 'public');
-
-                        $motorcycle->images()->create(['path' => $path]);
-                        if ($index == 0) $validatedData['file_path'] = $path;
-                    }
-
                 }
             }
+
+            if ($request->has('news')) {
+                Log::info($request->file('news'));
+                foreach ((array) $request->file('news') as $index => $imgData) {
+                    $file = $request->file("news.$index");
+                    $path = $file->store('uploads', 'public');
+
+                    $motorcycle->images()->create(['path' => $path]);
+
+                    if ($index == 0) $validatedData['file_path'] = $path;
+                }
+            }
+
+            // if ($request->has('files') || $request->has("fileStats")) {
+            //     $fileStats = json_decode($request->fileStats, true);
+            //     $files = (array) $request->file("files");
+
+            //     Log::info($request->file("files"));
+            //     Log::info($fileStats);
+
+            //     foreach ($fileStats as $index => $stat) {
+            //         // ? Case 1: Delete
+            //         if ($stat['status'] === 'delete' && isset($stat['id'])) {
+            //             $image = Image::where('id', $stat['id'])
+            //                 ->where('motorcycle_id', $motorcycle->id)
+            //                 ->first();
+
+            //                 Log::info($image);
+
+            //             if ($image) {
+            //                 if ($image->path && Storage::disk('public')->exists($image->path))
+            //                     Storage::disk('public')->delete($image->path);
+
+            //                 $image->delete();
+            //             }
+            //         }
+
+            //         // ? Case 2: New Upload
+            //         if ($stat['status'] === 'new' && $files[$index] instanceof \Illuminate\Http\UploadedFile) {
+            //             $file = $request->file("files.$index");
+            //             $path = $file->store('uploads', 'public');
+
+            //             $motorcycle->images()->create(['path' => $path]);
+            //             if ($index == 0) $validatedData['file_path'] = $path;
+            //         }
+
+            //     }
+            // }
 
             $motorcycle->update($validatedData);
 
