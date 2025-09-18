@@ -17,8 +17,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('motorcycle_id');
             $table->foreign('motorcycle_id')->references('id')->on('motorcycles');
+            $table->string('image_type');
             $table->string('path');
-            $table->integer('quantity');
             $table->timestamps();
         });
     }

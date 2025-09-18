@@ -45,6 +45,7 @@ class MotorcycleController extends Controller
     public function store(Request $request)
     {
         $images = [];
+        $angles = [];
 
         try {
             $validated = $request->validate([
@@ -66,6 +67,11 @@ class MotorcycleController extends Controller
             foreach ($request->file('files') as $file) {
                 $path = $file->store('uploads', 'public');
                 $images[] = $path;
+            }
+
+            foreach ($request->file('angles') as $file) {
+                $path = $file->store('uploads', 'public');
+                $angles[] = $path;
             }
 
             $motor = Motorcycle::create([
@@ -116,7 +122,11 @@ class MotorcycleController extends Controller
             }
 
             foreach ($images as $path) {
-                $motor->images()->create(['path' => $path]);
+                $motor->images()->create(['path' => $path, 'image_type' => 'color']);
+            }
+
+            foreach ($angles as $path) {
+                $motor->images()->create(['path' => $path, 'image_type' => 'angle']);
             }
 
             return response()->json([

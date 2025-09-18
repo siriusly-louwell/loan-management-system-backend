@@ -11,9 +11,9 @@ class Color extends Model
     use HasFactory;
 
     protected $fillable = ['color', 'motorcycle_id'];
-    
-    public function motorcyle()
+
+    public function motorcycle()
     {
-        return $this->belongsTo(Motorcyle::class);
+        return $this->belongsTo(Motorcycle::class);
     }
 }
