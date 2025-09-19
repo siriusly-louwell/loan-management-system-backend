@@ -10,7 +10,7 @@ class Color extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['color', 'motorcycle_id'];
+    protected $fillable = ['color', 'motorcycle_id', 'quantity'];
 
     public function motorcycle()
     {

@@ -122,7 +122,7 @@ class MotorcycleController extends Controller
             }
 
             foreach ($images as $path) {
-                $motor->images()->create(['path' => $path]);
+                $motor->images()->create(['path' => $path, 'image_type' => 'color']);
             }
 
             foreach ($angles as $path) {
@@ -249,12 +249,23 @@ class MotorcycleController extends Controller
                 }
             }
 
-            if ($request->has('news')) {
-                foreach ((array) $request->file('news') as $index => $imgData) {
-                    $file = $request->file("news.$index");
+            if ($request->has('newColors')) {
+                foreach ((array) $request->file('newColors') as $index => $imgData) {
+                    $file = $request->file("newColors.$index");
                     $path = $file->store('uploads', 'public');
 
-                    $motorcycle->images()->create(['path' => $path]);
+                    $motorcycle->images()->create(['path' => $path, 'image_type' => 'color']);
+
+                    if ($index == 0) $validatedData['file_path'] = $path;
+                }
+            }
+
+            if ($request->has('newAngles')) {
+                foreach ((array) $request->file('newAngles') as $index => $imgData) {
+                    $file = $request->file("newAngles.$index");
+                    $path = $file->store('uploads', 'public');
+
+                    $motorcycle->images()->create(['path' => $path, 'image_type' => 'angle']);
 
                     if ($index == 0) $validatedData['file_path'] = $path;
                 }
