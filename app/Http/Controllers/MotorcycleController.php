@@ -19,9 +19,15 @@ class MotorcycleController extends Controller
     public function index(Request $request)
     {
         // return response()->json(Motorcycle::all());
-        $motorcycles = $request->has('ids')
-            ? Motorcycle::with('colors')->whereIn('id', $request->input('ids'))->get()
-            : Motorcycle::with(['colors', 'images'])->get();
+
+        // $motorcycles = $request->has('ids')
+        //     ? Motorcycle::with('colors')->whereIn('id', $request->input('ids'))->get()
+        //     : Motorcycle::with(['colors', 'images'])->get();
+
+        // $motorcycles = Motorcycle::with(['colors', 'images'])->get();
+
+        $perPage = $request->input('per_page', 8);
+        $motorcycles = Motorcycle::with(['colors', 'images'])->orderBy('created_at', 'desc')->paginate($perPage);
 
         return response()->json($motorcycles);
     }
@@ -53,7 +59,9 @@ class MotorcycleController extends Controller
                 'brand' => 'required|string',
                 'description' => 'required|string',
                 'price' => 'required|numeric',
-                'quantity' => 'required|integer',
+                'quantity' => 'required|array',
+                'quantity.*' => 'required|integer',
+                'totalQuantity' => 'required|integer',
                 'interest' => 'required|integer',
                 'tenure' => 'required|integer',
                 'rebate' => 'required|numeric',
