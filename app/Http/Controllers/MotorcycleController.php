@@ -27,7 +27,19 @@ class MotorcycleController extends Controller
         // $motorcycles = Motorcycle::with(['colors', 'images'])->get();
 
         $perPage = $request->input('per_page', 8);
-        $motorcycles = Motorcycle::with(['colors', 'images'])->orderBy('created_at', 'desc')->paginate($perPage);
+        $search = $request->input('search');
+
+        $motorcycles = Motorcycle::with(['colors', 'images'])
+            ->when($search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('brand', 'like', "%{$search}%")
+                    ->orWhere('interest', 'like', "%{$search}%")
+                    ->orWhere('rebate', 'like', "%{$search}%")
+                    ->orWhere('tenure', 'like', "%{$search}%")
+                    ->orWhere('price', 'like', "%{$search}%");
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
 
         return response()->json($motorcycles);
     }
