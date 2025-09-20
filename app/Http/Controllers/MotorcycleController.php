@@ -79,7 +79,7 @@ class MotorcycleController extends Controller
                 'brand' => $validated['brand'],
                 'price' => $validated['price'],
                 'description' => $validated['description'],
-                'quantity' => $validated['quantity'],
+                'quantity' => $validated['totalQuantity'],
                 'rebate' => $validated['rebate'],
                 'tenure' => $validated['tenure'],
                 'interest' => $validated['interest'],
@@ -117,8 +117,8 @@ class MotorcycleController extends Controller
                 'cruise' => $request->cruise,
             ]);
 
-            foreach ($validated['colors'] as $color) {
-                $motor->colors()->create(['color' => $color]);
+            foreach ($validated['colors'] as $key =>  $color) {
+                $motor->colors()->create(['color' => $color, 'quantity' => $request->quantity[$key]]);
             }
 
             foreach ($images as $path) {
