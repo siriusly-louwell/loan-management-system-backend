@@ -210,6 +210,8 @@ class MotorcycleController extends Controller
                 'description' => 'sometimes|string',
                 'price' => 'sometimes|numeric',
                 'quantity' => 'sometimes|integer',
+                'totalQuantity' => 'sometimes|array',
+                'totalQuantity.*' => 'sometimes|integer',
                 'rebate' => 'sometimes|numeric',
                 'downpayment' => 'sometimes|numeric',
                 'interest' => 'sometimes|integer',
@@ -250,10 +252,11 @@ class MotorcycleController extends Controller
             ]);
 
             if ($request->has('colors')) {
-                $motorcycle->colors()->delete();
-
-                foreach ($request->colors as $color) {
-                    $motorcycle->colors()->create(['color' => $color]);
+                foreach ($request->colors as $key => $color) {
+                    $motorcycle->colors()->updateOrCreate(
+                        ['color' => $color],
+                        ['quantity' => $request->totalQuantity[$key]]
+                    );
                 }
             }
 
