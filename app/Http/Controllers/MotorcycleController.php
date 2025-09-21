@@ -43,10 +43,10 @@ class MotorcycleController extends Controller
         if ($request->has('min') || $request->has('max')) {
             $min = $request->input('min');
             $max = $request->input('max');
+            $type = $request->input('type');
 
-            $motorcycles->when($min, fn($q) => $q->where('quantity', '>=', $min))
-                ->when($max, fn($q) => $q->where('quantity', '<=', $max))
-                ->paginate($perPage);
+            $motorcycles->when($min, fn($q) => $q->where($type, '>=', $min))
+                ->when($max, fn($q) => $q->where($type, '<=', $max));
         }
 
         return response()->json($motorcycles->orderBy('created_at', 'desc')->paginate($perPage));
