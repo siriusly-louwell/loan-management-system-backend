@@ -18,8 +18,6 @@ class MotorcycleController extends Controller
      */
     public function index(Request $request)
     {
-        // return response()->json(Motorcycle::all());
-
         // $motorcycles = $request->has('ids')
         //     ? Motorcycle::with('colors')->whereIn('id', $request->input('ids'))->get()
         //     : Motorcycle::with(['colors', 'images'])->get();
@@ -27,21 +25,31 @@ class MotorcycleController extends Controller
         // $motorcycles = Motorcycle::with(['colors', 'images'])->get();
 
         $perPage = $request->input('per_page', 8);
-        $search = $request->input('search');
+        $motorcycles = Motorcycle::with(['colors', 'images']);
 
-        $motorcycles = Motorcycle::with(['colors', 'images'])
-            ->when($search, function ($query, $search) {
+        if ($request->has('search')) {
+            $search = $request->input('search');
+
+            $motorcycles->when($search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('brand', 'like', "%{$search}%")
                     ->orWhere('interest', 'like', "%{$search}%")
                     ->orWhere('rebate', 'like', "%{$search}%")
                     ->orWhere('tenure', 'like', "%{$search}%")
                     ->orWhere('price', 'like', "%{$search}%");
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            });
+        }
 
-        return response()->json($motorcycles);
+        if ($request->has('min') || $request->has('max')) {
+            $min = $request->input('min');
+            $max = $request->input('max');
+
+            $motorcycles->when($min, fn($q) => $q->where('quantity', '>=', $min))
+                ->when($max, fn($q) => $q->where('quantity', '<=', $max))
+                ->paginate($perPage);
+        }
+
+        return response()->json($motorcycles->orderBy('created_at', 'desc')->paginate($perPage));
     }
 
     /**
