@@ -77,6 +77,7 @@ class MotorcycleController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string',
                 'brand' => 'required|string',
+                'unit_type' => 'required|string',
                 'description' => 'required|string',
                 'price' => 'required|numeric',
                 'quantity' => 'required|array',
@@ -105,6 +106,7 @@ class MotorcycleController extends Controller
             $motor = Motorcycle::create([
                 'name' => $validated['name'],
                 'brand' => $validated['brand'],
+                'unit_type' => $validated['unit_type'],
                 'price' => $validated['price'],
                 'description' => $validated['description'],
                 'quantity' => $validated['totalQuantity'],
@@ -206,6 +208,7 @@ class MotorcycleController extends Controller
             $validatedData = $request->validate([
                 'name' => 'sometimes|string',
                 'brand' => 'sometimes|string',
+                'unit_type' => 'sometimes|string',
                 'color' => 'sometimes|string',
                 'description' => 'sometimes|string',
                 'price' => 'sometimes|numeric',

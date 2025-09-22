@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('brand');
+            $table->string("unit_type");
             $table->text('description');
             $table->decimal('price', 20, 2);
             $table->integer('quantity');
