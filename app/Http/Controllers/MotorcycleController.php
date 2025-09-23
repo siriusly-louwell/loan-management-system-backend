@@ -27,16 +27,27 @@ class MotorcycleController extends Controller
         $perPage = $request->input('per_page', 8);
         $motorcycles = Motorcycle::with(['colors', 'images']);
 
+        if ($request->has('unit_type')) {
+            $unitType = $request->input('unit_type');
+            Log::info($request->input('unit_type'));
+
+            $motorcycles->when($unitType, function ($query, $unitType) {
+                $query->where('unit_type', $unitType);
+            });
+        }
+
         if ($request->has('search')) {
             $search = $request->input('search');
 
             $motorcycles->when($search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('brand', 'like', "%{$search}%")
-                    ->orWhere('interest', 'like', "%{$search}%")
-                    ->orWhere('rebate', 'like', "%{$search}%")
-                    ->orWhere('tenure', 'like', "%{$search}%")
-                    ->orWhere('price', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('brand', 'like', "%{$search}%")
+                        ->orWhere('interest', 'like', "%{$search}%")
+                        ->orWhere('rebate', 'like', "%{$search}%")
+                        ->orWhere('tenure', 'like', "%{$search}%")
+                        ->orWhere('price', 'like', "%{$search}%");
+                });
             });
         }
 
