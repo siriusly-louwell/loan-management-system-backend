@@ -29,7 +29,6 @@ class MotorcycleController extends Controller
 
         if ($request->has('unit_type')) {
             $unitType = $request->input('unit_type');
-            Log::info($request->input('unit_type'));
 
             $motorcycles->when($unitType, function ($query, $unitType) {
                 $query->where('unit_type', $unitType);
