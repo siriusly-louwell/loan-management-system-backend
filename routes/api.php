@@ -34,7 +34,7 @@ Route::resource('motorcycle', MotorcycleController::class);
 
 // ? Account Routes
 Route::resource('account', UserController::class);
-Route::middleware('auth:sanctum')->get('/account', [UserController::class, 'account']);
+// Route::middleware('auth:sanctum')->get('/account', [UserController::class, 'account']);
 Route::post('/login', [LoginController::class, 'login']);
 
 // ? Application Routes

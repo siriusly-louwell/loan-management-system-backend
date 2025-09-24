@@ -21,7 +21,7 @@ class UserController extends Controller
         // return response()->json(User::all());
 
         $perPage = $request->input('per_page', 8);
-        $users = User::all();
+        $users = User::query();
 
         if ($request->has('role')) {
             $role = $request->input('role');
@@ -146,11 +146,11 @@ class UserController extends Controller
         return response()->json($user);
     }
 
-    public function account(Request $request)
-    {
-        Log::info("here");
-        return response()->json(Auth::user());
-    }
+    // public function account(Request $request)
+    // {
+    //     Log::info("here");
+    //     return response()->json(Auth::user());
+    // }
 
     /**
      * Show the form for editing the specified resource.
