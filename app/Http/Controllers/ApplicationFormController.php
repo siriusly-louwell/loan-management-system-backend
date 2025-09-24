@@ -23,23 +23,22 @@ class ApplicationFormController extends Controller
         // return response()->json($applications);
 
         $perPage = $request->input('per_page', 8);
-        $motorcycles = ApplicationForm::with(['user', 'address']);
+        $applications = ApplicationForm::with(['user', 'address']);
 
         if ($request->has('search')) {
             $search = $request->input('search');
 
-            $motorcycles->when($search, function ($query, $search) {
+            $applications->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('first_name', 'like', "%{$search}%")
+                    $q->where('first_name', 'like', "%{$search}%")
                         ->orWhere('middle_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('record_id', 'like', "%{$search}%")
                         ->orWhere('apply_status', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('contact_num', 'like', "%{$search}%")
                         ->orWhere('tin', 'like', "%{$search}%")
-                        ->orWhere('sss', 'like', "%{$search}%")
-                        ->orWhere('created_at', 'like', "%{$search}%");
+                        ->orWhere('sss', 'like', "%{$search}%");
                 });
             });
         }
@@ -49,11 +48,11 @@ class ApplicationFormController extends Controller
             $max = $request->input('max');
             $type = $request->input('type');
 
-            $motorcycles->when($min, fn($q) => $q->where($type, '>=', $min))
+            $applications->when($min, fn($q) => $q->where($type, '>=', $min))
                 ->when($max, fn($q) => $q->where($type, '<=', $max));
         }
 
-        return response()->json($motorcycles->orderBy('created_at', 'desc')->paginate($perPage));
+        return response()->json($applications->orderBy('created_at', 'desc')->paginate($perPage));
     }
 
     /**

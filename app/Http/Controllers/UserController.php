@@ -7,6 +7,7 @@ use App\Models\ApplicationForm;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -15,9 +16,48 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(User::all());
+        // return response()->json(User::all());
+
+        $perPage = $request->input('per_page', 8);
+        $users = User::all();
+
+        if ($request->has('role')) {
+            $role = $request->input('role');
+
+            $users->when($role, function ($query, $role) {
+                $query->where('role', $role);
+            });
+        }
+
+        if ($request->has('search')) {
+            $search = $request->input('search');
+
+            $users->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('middle_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('contact_num', 'like', "%{$search}%")
+                        ->orWhere('role', 'like', "%{$search}%")
+                        ->orWhere('status', 'like', "%{$search}%")
+                        ->orWhere('gender', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        if ($request->has('min') || $request->has('max')) {
+            $min = $request->input('min');
+            $max = $request->input('max');
+            $type = $request->input('type');
+
+            $users->when($min, fn($q) => $q->where($type, '>=', $min))
+                ->when($max, fn($q) => $q->where($type, '<=', $max));
+        }
+
+        return response()->json($users->orderBy('created_at', 'desc')->paginate($perPage));
     }
 
     /**
@@ -108,6 +148,7 @@ class UserController extends Controller
 
     public function account(Request $request)
     {
+        Log::info("here");
         return response()->json(Auth::user());
     }
 
