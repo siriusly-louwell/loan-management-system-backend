@@ -26,8 +26,9 @@ class ApplicationFormController extends Controller
         $perPage = $request->input('per_page', 8);
         $applications = ApplicationForm::with(['user', 'address']);
 
-        $applications->when($request->boolean('isApproved'), function ($query) {
-            $query->where('apply_status', 'approved');
+        $applications->when($request->filled('statuses'), function ($query) use ($request) {
+            $statuses = $request->input('statuses');
+            $query->whereIn('apply_status', $statuses);
         });
 
         if ($request->has('search')) {
