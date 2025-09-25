@@ -250,6 +250,9 @@ class ApplicationFormController extends Controller
         $by = request()->query('by');
         $stff = request()->query('stff');
 
+        Log::info($by);
+        Log::info($by);
+
         $query = ApplicationForm::query();
 
         switch ($by) {
