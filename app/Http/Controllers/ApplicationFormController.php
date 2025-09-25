@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\ApplicationForm;
 use App\Models\Address;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ApplicationFormController extends Controller
@@ -24,6 +25,10 @@ class ApplicationFormController extends Controller
 
         $perPage = $request->input('per_page', 8);
         $applications = ApplicationForm::with(['user', 'address']);
+
+        $applications->when($request->boolean('isApproved'), function ($query) {
+            $query->where('apply_status', 'approved');
+        });
 
         if ($request->has('search')) {
             $search = $request->input('search');

@@ -40,7 +40,6 @@ class UserController extends Controller
                         ->orWhere('middle_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('contact_num', 'like', "%{$search}%")
                         ->orWhere('role', 'like', "%{$search}%")
                         ->orWhere('status', 'like', "%{$search}%")
                         ->orWhere('gender', 'like', "%{$search}%");
@@ -127,7 +126,7 @@ class UserController extends Controller
 
             return response()->json([
                 'message' => 'Account was created successfully!',
-                'type' => 'valid',
+                'type' => 'success',
                 'user' => $user,
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
