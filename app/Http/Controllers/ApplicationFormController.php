@@ -250,32 +250,35 @@ class ApplicationFormController extends Controller
         $by = request()->query('by');
         $stff = request()->query('stff');
 
-        Log::info($by);
-        Log::info($by);
+        $application = ApplicationForm::query()
+            ->where($by, $value)
+            ->when($by === 'id', fn($q) => $q->with(['transactions.motorcycle', 'address', 'ciReport']))
+            ->when($stff === 'record_id', fn($q) => $q->with(['transactions.motorcycle']))
+            ->first();
 
-        $query = ApplicationForm::query();
+        // $query = ApplicationForm::query();
 
-        switch ($by) {
-            case 'id':
-                $application = $query->where('id', $value)
-                    ->with(['transactions.motorcycle', 'address', 'ciReport'])
-                    ->firstOrFail();
-                break;
+        // switch ($by) {
+        //     case 'id':
+        //         $application = $query->where('id', $value)
+        //             ->with(['transactions.motorcycle', 'address', 'ciReport'])
+        //             ->firstOrFail();
+        //         break;
 
-            case 'apply_status':
-                $application = $query->where('apply_status', $value)->get();
-                break;
+        //     case 'apply_status':
+        //         $application = $query->where('apply_status', $value)->get();
+        //         break;
 
-            default:
-                if ($stff === 'record_id') {
-                    $application = $query->where($by, $value)
-                        ->with('transactions.motorcycle')
-                        ->firstOrFail();
-                } else {
-                    $application = $query->where($by, $value)->firstOrFail();
-                }
-                break;
-        }
+        //     default:
+        //         if ($stff === 'record_id') {
+        //             $application = $query->where($by, $value)
+        //                 ->with('transactions.motorcycle')
+        //                 ->firstOrFail();
+        //         } else {
+        //             $application = $query->where($by, $value)->firstOrFail();
+        //         }
+        //         break;
+        // }
 
         return response()->json($application);
     }
