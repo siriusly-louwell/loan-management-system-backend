@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('role');
             $table->string('status');
-            $table->text('pfp');
+            $table->text('pfp')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
