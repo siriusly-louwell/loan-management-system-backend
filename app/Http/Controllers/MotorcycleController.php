@@ -22,7 +22,31 @@ class MotorcycleController extends Controller
         //     ? Motorcycle::with('colors')->whereIn('id', $request->input('ids'))->get()
         //     : Motorcycle::with(['colors', 'images'])->get();
 
-        // $motorcycles = Motorcycle::with(['colors', 'images'])->get();
+        if ($request->has('ndi')) {
+            // $motorcycles = Motorcycle::with(['colors', 'images'])->get();
+            $ndi = $request->input('ndi');
+
+            $motorcycles = Motorcycle::with(['colors', 'images'])->get()
+                ->filter(function ($motor) use ($ndi) {
+                    $tenure = $motor->tenure * 12;
+                    $loanAmount = ($motor->price ?? 0) - ($motor->downpayment ?? 0);
+                    $monthlyRate = $motor->interest / 12 / 100;
+
+                    if ($tenure <= 0 || $loanAmount <= 0) {
+                        return false;
+                    }
+
+                    $emi = $monthlyRate == 0
+                        ? $loanAmount / $tenure
+                        : ($loanAmount * $monthlyRate * pow(1 + $monthlyRate, $tenure)) /
+                        (pow(1 + $monthlyRate, $tenure) - 1);
+
+                    return round($emi, 2) / $ndi <= 0.3;
+                });
+
+            return response()->json($motorcycles->values());
+        }
+
 
         $perPage = $request->input('per_page', 8);
         $motorcycles = Motorcycle::with(['colors', 'images']);

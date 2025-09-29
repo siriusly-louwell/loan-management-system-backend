@@ -287,6 +287,7 @@ class ApplicationFormController extends Controller
 
             return response()->json([
                 'message' => 'Data updated successfully',
+                'type' => 'success',
                 'data' => $application
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
