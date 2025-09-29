@@ -286,7 +286,7 @@ class ApplicationFormController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Data updated successfully',
+                'message' => 'Application updated successfully',
                 'type' => 'success',
                 'data' => $application
             ]);
