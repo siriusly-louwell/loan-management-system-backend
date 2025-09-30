@@ -67,14 +67,13 @@ class CiReportController extends Controller
             $motor = CiReport::create($validated);
             $application = ApplicationForm::where('id', $request->application_id)->firstOrFail();
 
-            if($application->apply_status == "accepted") {
+            if ($application->apply_status == "accepted") {
                 $application->apply_status = "evaluated";
                 $application->save();
-                    
             } else return response()->json(['message' => 'This account is not approved yet', 'type' => 'invalid']);
-        
-            return response()->json(['message' => 'Report saved successfully!'], 201);
-        } catch(\Illuminate\Validation\ValidationException $e) {
+
+            return response()->json(['message' => 'Report saved successfully!', 'type' => 'success'], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }
     }
@@ -88,7 +87,7 @@ class CiReportController extends Controller
     public function show($id)
     {
         $response = CiReport::where('application_form_id', $id)->firstOrFail();
-        
+
         return response()->json($response);
     }
 
