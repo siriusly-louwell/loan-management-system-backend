@@ -18,19 +18,21 @@ class ApplicationFormController extends Controller
      */
     public function index(Request $request)
     {
-        // return response()->json(ApplicationForm::all());
-        // $applications = ApplicationForm::with(['user', 'address'])->get();
-
-        // return response()->json($applications);
-
         $perPage = $request->input('per_page', 8);
         $applications = ApplicationForm::with(['user', 'address']);
 
+        // ? Customer-specific filter
+        $applications->when($request->input('isCustomer') !== 'false', function ($query) use ($request) {
+            $query->where('user_id', $request->input('isCustomer'));
+        });
+
+        // ? Filter by statuses
         $applications->when($request->filled('statuses'), function ($query) use ($request) {
             $statuses = $request->input('statuses');
             $query->whereIn('apply_status', $statuses);
         });
 
+        // ? Search filter
         if ($request->has('search')) {
             $search = $request->input('search');
 
@@ -49,6 +51,7 @@ class ApplicationFormController extends Controller
             });
         }
 
+        // ? Min/max filter
         if ($request->has('min') || $request->has('max')) {
             $min = $request->input('min');
             $max = $request->input('max');

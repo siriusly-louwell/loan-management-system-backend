@@ -39,7 +39,7 @@ class ApplicationForm extends Model
 
     public function payment()
     {
-        return $this->hasMany(Payment::class);
+        return $this->hasMany(Payment::class, 'application_form_id');
     }
 
     public function ciReport() {

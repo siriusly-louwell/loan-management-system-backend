@@ -15,6 +15,6 @@ class Payment extends Model
     ];
 
     public function application() {
-        return $this->belongsTo(ApplicationForm::class);
+        return $this->belongsTo(ApplicationForm::class, 'application_form_id');
     }
 }

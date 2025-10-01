@@ -15,7 +15,8 @@ class PaymentController extends Controller
      */
     public function index()
     {
-        return response()->json(Payment::all());
+        $payments = Payment::with('application')->get();
+        return response()->json($payments);
     }
 
     /**
@@ -50,9 +51,9 @@ class PaymentController extends Controller
                 'amount_paid' => $validated['amount_paid'],
                 'status' => $request->status
             ]);
-        
-            return response()->json(['message' => 'Payment saved successfully!'], 201);
-        } catch(\Illuminate\Validation\ValidationException $e) {
+
+            return response()->json(['message' => 'Payment saved successfully!', 'type' => 'success'], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors ' => $e->errors()], 422);
         }
     }
