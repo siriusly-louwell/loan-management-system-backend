@@ -22,6 +22,8 @@ return new class extends Migration
             $table->text('spouse_pres')->nullable();
             $table->text('spouse_prev')->nullable();
             $table->text('employer_address')->nullable();
+            $table->text('lat')->nullable();
+            $table->text('lng')->nullable();
             $table->timestamps();
         });
     }

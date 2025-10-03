@@ -12,6 +12,8 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    // ? admin password: $2y$10$cJlF3SWlfw7drs8SyMsLbe..A0iS77BkGZ60cLHmFbYQ1Ru427ZKO
+
     /**
      * The attributes that are mass assignable.
      *
