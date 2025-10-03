@@ -102,6 +102,8 @@ class ApplicationFormController extends Controller
                     'spouse_pres' => $request->spouse_pres,
                     'spouse_prev' => $request->spouse_prev,
                     'employer_address' => $request->employer_address,
+                    'lat' => $request->lat,
+                    'lng' => $request->lng,
                 ]);
 
                 // $validatedData = $request->validate([
