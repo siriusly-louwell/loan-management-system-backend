@@ -69,7 +69,6 @@ return new class extends Migration
             $table->text('valid_id');
             $table->text('residence_proof');
             $table->text('income_proof');
-            $table->text('sketch');
             $table->date('from_sched')->nullable();
             $table->date('to_sched')->nullable();
             $table->timestamps();

@@ -84,16 +84,6 @@ class ApplicationFormController extends Controller
     {
         $response = DB::transaction(function () use ($request) {
             try {
-                // $validateAddress = $request->validate([
-                //     'personal_pres' => 'required|string',
-                //     'personal_prev' => 'required|string',
-                //     'parent_pres' => 'required|string',
-                //     'parent_prev' => 'required|string',
-                //     'spouse_pres' => 'required|string',
-                //     'spouse_prev' => 'required|string',
-                //     'employer_address' => 'required|string',
-                // ]);
-
                 $address = Address::create([
                     'personal_pres' => $request->personal_pres,
                     'personal_prev' => $request->personal_prev,
@@ -105,40 +95,6 @@ class ApplicationFormController extends Controller
                     'lat' => $request->lat,
                     'lng' => $request->lng,
                 ]);
-
-                // $validatedData = $request->validate([
-                // 'first_name' => 'required|string',
-                // 'last_name' => 'required|string',
-                // 'middle_name' => 'required|string',
-                // 'gender' => 'required|string',
-                // 'status' => 'required|string',
-                // 'educ_attain' => 'required|string',
-                // 'residence' => 'required|string',
-                // 'amortization' => 'required|numeric',
-                // 'rent' => 'required|numeric',
-                // 'sss' => 'required|string',
-                // 'tin' => 'required|string',
-                // 'income' => 'required|string',
-                // 'superior' => 'required|string',
-                // 'employment_status' => 'required|string',
-                // 'yrs_in_service' => 'required|integer',
-                // 'rate' => 'required|string',
-                // 'employer' => 'required|string',
-                // 'salary' => 'required|string',
-                // 'business' => 'required|string',
-                // 'living_exp' => 'required|string',
-                // 'rental_exp' => 'required|string',
-                // 'education_exp' => 'required|string',
-                // 'transportation' => 'required|string',
-                // 'insurance' => 'required|string',
-                // 'bills' => 'required|string',
-                // 'spouse_name' => 'required|string',
-                // 'b_date' => 'required|string',
-                // 'spouse_work' => 'required|string',
-                // 'children_num' => 'required|string',
-                // 'children_dep' => 'required|string',
-                // 'school' => 'required|string'
-                // ]);
 
                 if ($request->hasFile('valid_id')) {
                     $valid_id = $request->file('valid_id')->store('uploads', 'public');
@@ -153,9 +109,6 @@ class ApplicationFormController extends Controller
                 }
                 if ($request->hasFile('income_proof')) {
                     $income_proof = $request->file('income_proof')->store('uploads', 'public');
-                }
-                if ($request->hasFile('sketch')) {
-                    $sketch = $request->file('sketch')->store('uploads', 'public');
                 }
 
                 $recordId = '2025-' . strtoupper(Str::random(8));
@@ -210,7 +163,7 @@ class ApplicationFormController extends Controller
                     'id_pic' => $id_pic,
                     'residence_proof' => $residence_proof,
                     'income_proof' => $income_proof,
-                    'sketch' => $sketch
+                    // 'sketch' => $sketch
                 ]);
 
                 // foreach ($request->transactions as $transaction) {
