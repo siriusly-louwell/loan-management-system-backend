@@ -202,9 +202,6 @@ class ApplicationFormController extends Controller
      */
     public function show($value)
     {
-        // return response()->json($application->load(['transactions.motorcycle', 'address']));
-
-        // $key = request()->query('by') === 'record_id' ? 'record_id' : 'id';
         $by = request()->query('by');
         $stff = request()->query('stff');
 

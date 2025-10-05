@@ -66,8 +66,13 @@ class PaymentController extends Controller
      */
     public function show($value)
     {
-        $payment = Payment::where('application_form_id', $value)->get()->first();
-        return response()->json($payment);
+        // $payment = Payment::where('application_form_id', $value)->get()->first();
+        // return response()->json($payment);
+
+        $by = request()->query('by');
+        $application = Payment::where($by, $value)->first();
+
+        return response()->json($application);
     }
 
     /**
