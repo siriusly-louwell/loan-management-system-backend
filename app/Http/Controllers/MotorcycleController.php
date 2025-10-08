@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Motorcycle;
 use App\Models\Image;
 use Hamcrest\Arrays\IsArray;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -18,12 +19,8 @@ class MotorcycleController extends Controller
      */
     public function index(Request $request)
     {
-        // $motorcycles = $request->has('ids')
-        //     ? Motorcycle::with('colors')->whereIn('id', $request->input('ids'))->get()
-        //     : Motorcycle::with(['colors', 'images'])->get();
 
         if ($request->has('ndi')) {
-            // $motorcycles = Motorcycle::with(['colors', 'images'])->get();
             $ndi = $request->input('ndi');
 
             $motorcycles = Motorcycle::with(['colors', 'images'])->get()
@@ -359,5 +356,52 @@ class MotorcycleController extends Controller
     public function destroy(Motorcycle $motorcycle)
     {
         //
+    }
+
+    public function count(Request $request)
+    {
+        $type = $request->input('type');
+        $month = $request->input('month');
+
+
+        if ($month) {
+            try {
+                $date = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Invalid month format. Use YYYY-MM.'], 400);
+            }
+        } else {
+            $date = Carbon::now()->startOfMonth();
+        }
+
+        $startDate = $date->copy()->startOfMonth();
+        $endDate = $date->copy()->endOfMonth();
+
+        $query = Motorcycle::whereBetween('created_at', [$startDate, $endDate]);
+        if ($type) $query->where('unit_type', $type);
+        $count = $query->count();
+
+        if (!$type) {
+            $newCount = Motorcycle::where('unit_type', 'new')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+
+            $repoCount = Motorcycle::where('unit_type', 'repo')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+
+            return response()->json([
+                'month' => $date->format('F Y'),
+                'new' => $newCount,
+                'repo' => $repoCount,
+                'total' => $newCount + $repoCount,
+            ]);
+        }
+
+        return response()->json([
+            'month' => $date->format('F Y'),
+            'type' => $type,
+            'count' => $count,
+        ]);
     }
 }

@@ -30,6 +30,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // ? Motorcycle Routes
 Route::patch('/motorcycle/{motorcycle}', [MotorcycleController::class, 'update']);
+Route::get('/motorcycle/count', [MotorcycleController::class, 'count']);
 Route::resource('motorcycle', MotorcycleController::class);
 
 // ? Account Routes
