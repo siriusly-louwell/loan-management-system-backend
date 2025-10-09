@@ -262,7 +262,7 @@ class ApplicationFormController extends Controller
         //
     }
 
-    public function countByType(Request $request)
+    public function count(Request $request)
     {
         $type = $request->input('type');
         $month = $request->input('month');
@@ -298,14 +298,13 @@ class ApplicationFormController extends Controller
 
             return response()->json([
                 'month' => $date->format('F Y'),
-                'status' => $type,
                 'count' => $currentCount,
                 'difference' => $diffLabel,
                 'message' => "{$diffLabel} since last month"
             ]);
         }
 
-        $types = ['new', 'repo'];
+        $types = ['pending', 'accepted', 'denied', 'evaluated', 'approved', 'declined', 'cancelled', 'paid'];
         $results = [];
 
         foreach ($types as $t) {
@@ -320,21 +319,28 @@ class ApplicationFormController extends Controller
             $diff = $current - $previous;
             $results[$t] = [
                 'count' => $current,
-                'difference' => $diff > 0 ? '+' . $diff : (string)$diff,
+                'difference' => $diff >= 0 ? '+' . $diff : (string)$diff,
+                'increment_type' => $diff > 0 ? 'incremented' : ($diff < 0 ? 'decremented' : 'neutral'),
             ];
         }
 
-        $totalCurrent = $results['new']['count'] + $results['repo']['count'];
+        $totalCurrent = collect($results)->sum('count');
         $totalPrevious = ApplicationForm::whereBetween('created_at', [$prevStart, $prevEnd])->count();
         $totalDiff = $totalCurrent - $totalPrevious;
 
         return response()->json([
             'month' => $date->format('F Y'),
-            'new' => $results['new'],
-            'repo' => $results['repo'],
+            'pending' => $results['pending'],
+            'accepted' => $results['accepted'],
+            'denied' => $results['denied'],
+            'evaluated' => $results['evaluated'],
+            'approved' => $results['approved'],
+            'declined' => $results['declined'],
+            'paid' => $results['paid'],
             'total' => [
                 'count' => $totalCurrent,
-                'difference' => $totalDiff > 0 ? '+' . $totalDiff : (string)$totalDiff,
+                'difference' => $totalDiff >= 0 ? '+' . $totalDiff : (string)$totalDiff,
+                'increment_type' => $totalDiff > 0 ? 'incremented' : ($totalDiff < 0 ? 'decremented' : 'neutral'),
             ],
         ]);
     }
