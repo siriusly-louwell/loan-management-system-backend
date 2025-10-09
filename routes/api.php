@@ -40,6 +40,7 @@ Route::post('/login', [LoginController::class, 'login']);
 
 // ? Application Routes
 Route::get('/application/count', [ApplicationFormController::class, 'count']);
+Route::get('/payment/count', [PaymentController::class, 'count']);
 Route::resource('application', ApplicationFormController::class);
 Route::resource('report', CiReportController::class);
 Route::resource('payment', PaymentController::class);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
@@ -107,5 +108,88 @@ class PaymentController extends Controller
     public function destroy(Payment $payment)
     {
         //
+    }
+
+    public function count(Request $request)
+    {
+        $data = [];
+        $type = $request->input('type');
+        $month = $request->input('month');
+
+        if ($request->boolean('analysis'))
+            $data = Payment::select('status', 'created_at')->get();
+
+        if ($month) {
+            try {
+                $date = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Invalid month format. Use YYYY-MM.'], 400);
+            }
+        } else {
+            $date = Carbon::now()->startOfMonth();
+        }
+
+        $startDate = $date->copy()->startOfMonth();
+        $endDate = $date->copy()->endOfMonth();
+
+        $prevStart = $date->copy()->subMonth()->startOfMonth();
+        $prevEnd = $date->copy()->subMonth()->endOfMonth();
+
+        $currentQuery = Payment::whereBetween('created_at', [$startDate, $endDate]);
+        $previousQuery = Payment::whereBetween('created_at', [$prevStart, $prevEnd]);
+
+        if ($type) {
+            $currentQuery->where('status', $type);
+            $previousQuery->where('status', $type);
+
+            $currentCount = $currentQuery->count();
+            $previousCount = $previousQuery->count();
+
+            $difference = $currentCount - $previousCount;
+            $diffLabel = $difference > 0 ? '+' . $difference : (string)$difference;
+
+            return response()->json([
+                'month' => $date->format('F Y'),
+                'count' => $currentCount,
+                'difference' => $diffLabel,
+                'message' => "{$diffLabel} since last month"
+            ]);
+        }
+
+        $types = ['on_time', 'late'];
+        $results = [];
+
+        foreach ($types as $t) {
+            $current = Payment::where('status', $t)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+
+            $previous = Payment::where('status', $t)
+                ->whereBetween('created_at', [$prevStart, $prevEnd])
+                ->count();
+
+            $diff = $current - $previous;
+            $results[$t] = [
+                'count' => $current,
+                'difference' => $diff >= 0 ? '+' . $diff : (string)$diff,
+                'increment_type' => $diff > 0 ? 'incremented' : ($diff < 0 ? 'decremented' : 'neutral'),
+            ];
+        }
+
+        $totalCurrent = $results['on_time']['count'] + $results['late']['count'];
+        $totalPrevious = Payment::whereBetween('created_at', [$prevStart, $prevEnd])->count();
+        $totalDiff = $totalCurrent - $totalPrevious;
+
+        return response()->json([
+            'data' => $data,
+            'month' => $date->format('F Y'),
+            'on_time' => $results['on_time'],
+            'late' => $results['late'],
+            'total' => [
+                'count' => $totalCurrent,
+                'difference' => $totalDiff >= 0 ? '+' . $totalDiff : (string)$totalDiff,
+                'increment_type' => $totalDiff > 0 ? 'incremented' : ($totalDiff < 0 ? 'decremented' : 'neutral'),
+            ],
+        ]);
     }
 }
