@@ -364,10 +364,9 @@ class MotorcycleController extends Controller
 
     public function count(Request $request)
     {
-        $type = $request->input('type'); // 'new', 'repo', or null
-        $month = $request->input('month'); // e.g. '2025-10'
+        $type = $request->input('type');
+        $month = $request->input('month');
 
-        // Determine the target month
         if ($month) {
             try {
                 $date = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
@@ -381,13 +380,9 @@ class MotorcycleController extends Controller
         $startDate = $date->copy()->startOfMonth();
         $endDate = $date->copy()->endOfMonth();
 
-        // Define previous month range
         $prevStart = $date->copy()->subMonth()->startOfMonth();
         $prevEnd = $date->copy()->subMonth()->endOfMonth();
-
-        // Base query for current month
         $currentQuery = Motorcycle::whereBetween('created_at', [$startDate, $endDate]);
-        // Base query for previous month
         $previousQuery = Motorcycle::whereBetween('created_at', [$prevStart, $prevEnd]);
 
         if ($type) {
@@ -408,7 +403,6 @@ class MotorcycleController extends Controller
             ]);
         }
 
-        // If no type, compute both 'new' and 'repo' totals
         $types = ['new', 'repo'];
         $results = [];
 

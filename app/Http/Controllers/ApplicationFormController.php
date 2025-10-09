@@ -264,8 +264,12 @@ class ApplicationFormController extends Controller
 
     public function count(Request $request)
     {
+        $data = [];
         $type = $request->input('type');
         $month = $request->input('month');
+
+        if ($request->boolean('analysis'))
+            $data = ApplicationForm::select('apply_status', 'created_at')->get();
 
         if ($month) {
             try {
@@ -329,6 +333,7 @@ class ApplicationFormController extends Controller
         $totalDiff = $totalCurrent - $totalPrevious;
 
         return response()->json([
+            'data' => $data,
             'month' => $date->format('F Y'),
             'pending' => $results['pending'],
             'accepted' => $results['accepted'],
