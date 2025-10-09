@@ -360,10 +360,10 @@ class MotorcycleController extends Controller
 
     public function count(Request $request)
     {
-        $type = $request->input('type');
-        $month = $request->input('month');
+        $type = $request->input('type'); // 'new', 'repo', or null
+        $month = $request->input('month'); // e.g. '2025-10'
 
-
+        // Determine the target month
         if ($month) {
             try {
                 $date = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
@@ -377,31 +377,67 @@ class MotorcycleController extends Controller
         $startDate = $date->copy()->startOfMonth();
         $endDate = $date->copy()->endOfMonth();
 
-        $query = Motorcycle::whereBetween('created_at', [$startDate, $endDate]);
-        if ($type) $query->where('unit_type', $type);
-        $count = $query->count();
+        // Define previous month range
+        $prevStart = $date->copy()->subMonth()->startOfMonth();
+        $prevEnd = $date->copy()->subMonth()->endOfMonth();
 
-        if (!$type) {
-            $newCount = Motorcycle::where('unit_type', 'new')
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->count();
+        // Base query for current month
+        $currentQuery = Motorcycle::whereBetween('created_at', [$startDate, $endDate]);
+        // Base query for previous month
+        $previousQuery = Motorcycle::whereBetween('created_at', [$prevStart, $prevEnd]);
 
-            $repoCount = Motorcycle::where('unit_type', 'repo')
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->count();
+        if ($type) {
+            $currentQuery->where('unit_type', $type);
+            $previousQuery->where('unit_type', $type);
+
+            $currentCount = $currentQuery->count();
+            $previousCount = $previousQuery->count();
+
+            $difference = $currentCount - $previousCount;
+            $diffLabel = $difference > 0 ? '+' . $difference : (string)$difference;
 
             return response()->json([
                 'month' => $date->format('F Y'),
-                'new' => $newCount,
-                'repo' => $repoCount,
-                'total' => $newCount + $repoCount,
+                'type' => $type,
+                'count' => $currentCount,
+                'difference' => $diffLabel,
+                'message' => "{$diffLabel} since last month"
             ]);
         }
 
+        // If no type, compute both 'new' and 'repo' totals
+        $types = ['new', 'repo'];
+        $results = [];
+
+        foreach ($types as $t) {
+            $current = Motorcycle::where('unit_type', $t)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+
+            $previous = Motorcycle::where('unit_type', $t)
+                ->whereBetween('created_at', [$prevStart, $prevEnd])
+                ->count();
+
+            $diff = $current - $previous;
+            $results[$t] = [
+                'count' => $current,
+                'difference' => $diff > 0 ? '+' . $diff : (string)$diff,
+            ];
+        }
+
+        $totalCurrent = $results['new']['count'] + $results['repo']['count'];
+        $totalPrevious = Motorcycle::whereBetween('created_at', [$prevStart, $prevEnd])->count();
+        $totalDiff = $totalCurrent - $totalPrevious;
+
         return response()->json([
             'month' => $date->format('F Y'),
-            'type' => $type,
-            'count' => $count,
+            'new' => $results['new'],
+            'repo' => $results['repo'],
+            'total' => [
+                'count' => $totalCurrent,
+                'difference' => $totalDiff > 0 ? '+' . $totalDiff : (string)$totalDiff,
+                'increment_type' => $totalDiff > 0,
+            ],
         ]);
     }
 }
