@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\ApplicationForm;
 use App\Models\Address;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -261,53 +262,91 @@ class ApplicationFormController extends Controller
         //
     }
 
-    private function empStability(float $rate, int $years): string
+    public function count(Request $request)
     {
-        $inc = $rate >= 15000;
-        $year = $years >= 1;
+        $data = [];
+        $type = $request->input('type');
+        $month = $request->input('month');
 
-        return $inc && $year ? 'green' : ($inc || $year ? 'yellow' : 'red');
-    }
+        if ($request->boolean('analysis'))
+            $data = ApplicationForm::select('apply_status', 'created_at')->get();
 
-    private function debtStability(float $loans, float $rent, float $amortization, float $rate): string
-    {
-        $dti = (($rent + $amortization + $loans) / $rate) * 100;
-
-        return $dti <= 35 ? 'green' : ($dti > 35 && $dti < 46 ? 'yellow' : 'red');
-    }
-
-    private function ndiStability(float $loans, float $rate, float $rent, float $amortization, float $bills, float $living_exp, float $education_exp, float $transportation): string
-    {
-        $ndi = $rate - ($rent + $amortization + $bills + $living_exp + $education_exp + $transportation);
-        $ndiBool = $loans / $ndi;
-
-        return $ndiBool <= 0.3 ? 'green' : ($ndiBool > 0.3 && $ndiBool < 0.41 ? 'yellow' : 'red');
-    }
-
-    private function eligibility($arr): string
-    {
-        $loans = 0;
-        $counts = ['green' => 0, 'yellow' => 0, 'red' => 0];
-
-        foreach ($arr->transactions as $unit) {
-            $tenure = $unit->tenure * 12;
-            $loanAmount = $unit->motorcycle->price - $unit->downpayment;
-            $monthlyRate = $unit->motorcycle->interest / 12 / 100;
-            $emi = $monthlyRate == 0 ? $loanAmount / $tenure
-                : ($loanAmount * $monthlyRate * pow(1 + $monthlyRate, $tenure)) / (pow(1 + $monthlyRate, $tenure) - 1);
-
-            $loans += $emi;
+        if ($month) {
+            try {
+                $date = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Invalid month format. Use YYYY-MM.'], 400);
+            }
+        } else {
+            $date = Carbon::now()->startOfMonth();
         }
 
-        $empStability = $this->empStability($arr->rate, $arr->yrs_in_service);
-        $debtStability = $this->debtStability($loans, $arr->rent, $arr->amortization, $arr->rate);
-        $ndiStability = $this->ndiStability($loans, $arr->rate, $arr->rent, $arr->amortization, $arr->bills, $arr->living_exp, $arr->education_exp, $arr->transportation);
+        $startDate = $date->copy()->startOfMonth();
+        $endDate = $date->copy()->endOfMonth();
 
-        foreach ([$empStability, $debtStability, $ndiStability] as $i) {
-            $counts[$i]++;
+        $prevStart = $date->copy()->subMonth()->startOfMonth();
+        $prevEnd = $date->copy()->subMonth()->endOfMonth();
+
+        $currentQuery = ApplicationForm::whereBetween('created_at', [$startDate, $endDate]);
+        $previousQuery = ApplicationForm::whereBetween('created_at', [$prevStart, $prevEnd]);
+
+        if ($type) {
+            $currentQuery->where('apply_status', $type);
+            $previousQuery->where('apply_status', $type);
+
+            $currentCount = $currentQuery->count();
+            $previousCount = $previousQuery->count();
+
+            $difference = $currentCount - $previousCount;
+            $diffLabel = $difference > 0 ? '+' . $difference : (string)$difference;
+
+            return response()->json([
+                'month' => $date->format('F Y'),
+                'count' => $currentCount,
+                'difference' => $diffLabel,
+                'message' => "{$diffLabel} since last month"
+            ]);
         }
 
-        return ($counts['green'] === 3 || ($counts['green'] === 2 && $counts['yellow'] === 1) || ($counts['green'] === 1 && $counts['yellow'] === 2)) ? 'accepted'
-            : (($counts['red'] === 3 || ($counts['red'] === 2 && $counts['yellow'] === 1) || ($counts['red'] === 1 && $counts['yellow'] === 2)) ? 'denied' : 'pending');
+        $types = ['pending', 'accepted', 'denied', 'evaluated', 'approved', 'declined', 'cancelled', 'paid'];
+        $results = [];
+
+        foreach ($types as $t) {
+            $current = ApplicationForm::where('apply_status', $t)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+
+            $previous = ApplicationForm::where('apply_status', $t)
+                ->whereBetween('created_at', [$prevStart, $prevEnd])
+                ->count();
+
+            $diff = $current - $previous;
+            $results[$t] = [
+                'count' => $current,
+                'difference' => $diff >= 0 ? '+' . $diff : (string)$diff,
+                'increment_type' => $diff > 0 ? 'incremented' : ($diff < 0 ? 'decremented' : 'neutral'),
+            ];
+        }
+
+        $totalCurrent = collect($results)->sum('count');
+        $totalPrevious = ApplicationForm::whereBetween('created_at', [$prevStart, $prevEnd])->count();
+        $totalDiff = $totalCurrent - $totalPrevious;
+
+        return response()->json([
+            'data' => $data,
+            'month' => $date->format('F Y'),
+            'pending' => $results['pending'],
+            'accepted' => $results['accepted'],
+            'denied' => $results['denied'],
+            'evaluated' => $results['evaluated'],
+            'approved' => $results['approved'],
+            'declined' => $results['declined'],
+            'paid' => $results['paid'],
+            'total' => [
+                'count' => $totalCurrent,
+                'difference' => $totalDiff >= 0 ? '+' . $totalDiff : (string)$totalDiff,
+                'increment_type' => $totalDiff > 0 ? 'incremented' : ($totalDiff < 0 ? 'decremented' : 'neutral'),
+            ],
+        ]);
     }
 }

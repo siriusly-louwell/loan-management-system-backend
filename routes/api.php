@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // });
 
 // ? Motorcycle Routes
+Route::get('/motorcycle/count', [MotorcycleController::class, 'count']);
 Route::patch('/motorcycle/{motorcycle}', [MotorcycleController::class, 'update']);
 Route::get('/motorcycle/count', [MotorcycleController::class, 'count']);
 Route::resource('motorcycle', MotorcycleController::class);
@@ -39,6 +40,8 @@ Route::resource('account', UserController::class);
 Route::post('/login', [LoginController::class, 'login']);
 
 // ? Application Routes
+Route::get('/application/count', [ApplicationFormController::class, 'count']);
+Route::get('/payment/count', [PaymentController::class, 'count']);
 Route::resource('application', ApplicationFormController::class);
 Route::resource('report', CiReportController::class);
 Route::resource('payment', PaymentController::class);

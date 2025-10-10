@@ -7,6 +7,7 @@ use App\Models\Image;
 use Hamcrest\Arrays\IsArray;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -360,10 +361,9 @@ class MotorcycleController extends Controller
 
     public function count(Request $request)
     {
-        $type = $request->input('type'); // 'new', 'repo', or null
-        $month = $request->input('month'); // e.g. '2025-10'
+        $type = $request->input('type');
+        $month = $request->input('month');
 
-        // Determine the target month
         if ($month) {
             try {
                 $date = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
@@ -377,13 +377,9 @@ class MotorcycleController extends Controller
         $startDate = $date->copy()->startOfMonth();
         $endDate = $date->copy()->endOfMonth();
 
-        // Define previous month range
         $prevStart = $date->copy()->subMonth()->startOfMonth();
         $prevEnd = $date->copy()->subMonth()->endOfMonth();
-
-        // Base query for current month
         $currentQuery = Motorcycle::whereBetween('created_at', [$startDate, $endDate]);
-        // Base query for previous month
         $previousQuery = Motorcycle::whereBetween('created_at', [$prevStart, $prevEnd]);
 
         if ($type) {
@@ -398,14 +394,12 @@ class MotorcycleController extends Controller
 
             return response()->json([
                 'month' => $date->format('F Y'),
-                'type' => $type,
                 'count' => $currentCount,
                 'difference' => $diffLabel,
                 'message' => "{$diffLabel} since last month"
             ]);
         }
 
-        // If no type, compute both 'new' and 'repo' totals
         $types = ['new', 'repo'];
         $results = [];
 
@@ -421,7 +415,8 @@ class MotorcycleController extends Controller
             $diff = $current - $previous;
             $results[$t] = [
                 'count' => $current,
-                'difference' => $diff > 0 ? '+' . $diff : (string)$diff,
+                'difference' => $diff >= 0 ? '+' . $diff : (string)$diff,
+                'increment_type' => $diff > 0 ? 'incremented' : ($diff < 0 ? 'decremented' : 'neutral'),
             ];
         }
 
@@ -430,13 +425,12 @@ class MotorcycleController extends Controller
         $totalDiff = $totalCurrent - $totalPrevious;
 
         return response()->json([
-            'month' => $date->format('F Y'),
             'new' => $results['new'],
-            'repo' => $results['repo'],
+            'repo' =>  $results['repo'],
             'total' => [
                 'count' => $totalCurrent,
-                'difference' => $totalDiff > 0 ? '+' . $totalDiff : (string)$totalDiff,
-                'increment_type' => $totalDiff > 0,
+                'difference' => $totalDiff >= 0 ? '+' . $totalDiff : (string)$totalDiff,
+                'increment_type' => $totalDiff > 0 ? 'incremented' : ($totalDiff < 0 ? 'decremented' : 'neutral'),
             ],
         ]);
     }
