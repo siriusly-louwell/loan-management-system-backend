@@ -360,8 +360,12 @@ class MotorcycleController extends Controller
 
     public function count(Request $request)
     {
+        $data = [];
         $type = $request->input('type');
         $month = $request->input('month');
+
+        if ($request->boolean('analysis'))
+            $data = Motorcycle::select('brand', 'unit_type', 'price', 'created_at')->get();
 
         if ($month) {
             try {
@@ -419,11 +423,38 @@ class MotorcycleController extends Controller
             ];
         }
 
+        $brands = [
+            'Honda',
+            'Yamaha',
+            'Kawasaki',
+            'Suzuki',
+            'KTM',
+            'Kymco',
+            'SYM',
+            'Skygo',
+            'Bennelli',
+            'Bristol',
+            'Rusi',
+            'Motorstar',
+            'QJMotor',
+            'FKM'
+        ];
+        $brandResults = [];
+
+        foreach ($brands as $t) {
+            $current = Motorcycle::where('brand', $t)->count();
+            $brandResults[$t] = [
+                'count' => $current,
+            ];
+        }
+
         $totalCurrent = $results['new']['count'] + $results['repo']['count'];
         $totalPrevious = Motorcycle::whereBetween('created_at', [$prevStart, $prevEnd])->count();
         $totalDiff = $totalCurrent - $totalPrevious;
 
         return response()->json([
+            'data' => $data,
+            'brand_count' => $brandResults,
             'new' => $results['new'],
             'repo' =>  $results['repo'],
             'total' => [
