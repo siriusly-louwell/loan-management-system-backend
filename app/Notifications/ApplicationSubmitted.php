@@ -6,21 +6,26 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 
 class ApplicationSubmitted extends Notification
 {
     use Queueable;
 
     protected $applicantName;
+    protected $recordID;
+    protected $transaction;
 
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct($applicantName)
+    public function __construct($applicantName, $recordId, $transaction)
     {
         $this->applicantName = $applicantName;
+        $this->recordID = $recordId;
+        $this->transaction = $transaction;
     }
 
     /**

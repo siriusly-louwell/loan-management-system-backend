@@ -165,23 +165,15 @@ class ApplicationFormController extends Controller
                     'id_pic' => $id_pic,
                     'residence_proof' => $residence_proof,
                     'income_proof' => $income_proof,
-                    // 'sketch' => $sketch
                 ]);
-
-                // foreach ($request->transactions as $transaction) {
-                //     $application->transactions()->create($transaction);
-                // }
-                // foreach ($request->transactions as $transaction) {
-                //     $transactionData = json_decode($transaction, true);
-                //     $application->transactions()->create($transactionData);
-                // }
 
                 $transactionData = json_decode($request->transaction, true);
                 $application->transactions()->create($transactionData);
-                $application->notify(new ApplicationSubmitted(`$application->first_name $application->last_name`));
-
-                // $application->load('transactions.motorcycle');
-                // $application->update(['apply_status' => $this->eligibility($application)]);
+                $application->notify(new ApplicationSubmitted(
+                    $request->first_name . ' ' . $request->last_name,
+                    $recordId,
+                    $transactionData
+                ));
 
                 return response()->json([
                     'message' => 'Application was submitted successfully!',
