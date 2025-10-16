@@ -63,7 +63,6 @@ class ApplicationSubmitted extends Notification
             ->line('**Down Payment:** ₱`' . $transaction['downpayment'] . '`')
             ->line('**Quantity:** `' . $transaction['quantity'] . '` unit/s')
             ->line('**Tenure:** `' . $transaction['tenure'] . '` year/s')
-            // ->line($this->buildTransactionTable())
             ->line('You can track the status of your application anytime by visiting our website and entering your record ID below.')
             ->line('**Record ID:** `' . $this->recordID . '`')
             ->action('Find My Application', url('http://localhost:3000/find'))
