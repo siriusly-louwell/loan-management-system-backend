@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 use App\Models\Address;
 use App\Models\User;
 use App\Models\CiReport;
@@ -13,6 +14,7 @@ use App\Models\Payment;
 class ApplicationForm extends Model
 {
     use HasFactory;
+    use Notifiable;
 
     protected $guarded = ['id'];
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use App\Models\ApplicationForm;
 use App\Models\Address;
+use App\Notifications\ApplicationSubmitted;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -177,6 +178,7 @@ class ApplicationFormController extends Controller
 
                 $transactionData = json_decode($request->transaction, true);
                 $application->transactions()->create($transactionData);
+                $application->notify(new ApplicationSubmitted(`$application->first_name $application->last_name`));
 
                 // $application->load('transactions.motorcycle');
                 // $application->update(['apply_status' => $this->eligibility($application)]);
