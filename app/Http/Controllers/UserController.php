@@ -89,6 +89,13 @@ class UserController extends Controller
                 'status' => 'required|string',
             ]);
 
+            if (User::where('email', $validatedData['email'])->exists()) {
+                return response()->json([
+                    'message' => 'An account with this email already exists',
+                    'type' => 'warn'
+                ], 409);
+            }
+
             $arr = [
                 'first_name' => $validatedData['first_name'],
                 'middle_name' => $request->middle_name,
@@ -117,7 +124,6 @@ class UserController extends Controller
 
                 // $arr['pfp'] = $pfp;
                 $user = User::create($arr);
-
             }
 
             $user->notify(new TemporaryPassword(
