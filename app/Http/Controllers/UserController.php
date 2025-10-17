@@ -93,7 +93,7 @@ class UserController extends Controller
                 return response()->json([
                     'message' => 'An account with this email already exists',
                     'type' => 'warn'
-                ], 409);
+                ]);
             }
 
             $arr = [
