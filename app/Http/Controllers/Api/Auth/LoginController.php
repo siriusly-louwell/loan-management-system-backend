@@ -27,8 +27,6 @@ class LoginController extends Controller
             ]);
         }
 
-        Log::info($request->password);
-
         // Attempt authentication
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([

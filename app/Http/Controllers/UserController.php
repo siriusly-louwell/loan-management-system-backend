@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\ApplicationForm;
+use App\Notifications\TemporaryPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -116,7 +117,14 @@ class UserController extends Controller
 
                 // $arr['pfp'] = $pfp;
                 $user = User::create($arr);
+
             }
+
+            $user->notify(new TemporaryPassword(
+                $arr['first_name'] . ' ' . $arr['last_name'],
+                $arr['role'],
+                $request->password
+            ));
 
             return response()->json([
                 'message' => 'Account was created successfully!',
