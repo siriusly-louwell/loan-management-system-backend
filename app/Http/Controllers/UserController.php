@@ -18,8 +18,6 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        // return response()->json(User::all());
-
         $perPage = $request->input('per_page', 8);
         $users = User::query();
 
@@ -107,8 +105,6 @@ class UserController extends Controller
 
                 if ($application->apply_status == "approved") {
                     $arr['pfp'] = $application->id_pic;
-                    // $arr['first_name'] = $application->first_name;
-                    // $arr['last_name'] = $application->last_name;
                     $arr['gender'] = $application->gender;
 
                     $user = User::create($arr);

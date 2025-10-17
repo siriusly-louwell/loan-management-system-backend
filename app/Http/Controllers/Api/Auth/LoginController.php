@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
@@ -25,6 +26,8 @@ class LoginController extends Controller
                 'errors' => $validator->errors()
             ]);
         }
+
+        Log::info($request->password);
 
         // Attempt authentication
         if (!Auth::attempt($request->only('email', 'password'))) {
