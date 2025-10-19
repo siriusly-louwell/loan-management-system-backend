@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\ApplicationForm;
 use App\Models\Address;
 use App\Notifications\ApplicationStatus;
+use App\Models\Schedule;
 use App\Notifications\ApplicationSubmitted;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -170,6 +171,17 @@ class ApplicationFormController extends Controller
 
                 $transactionData = json_decode($request->transaction, true);
                 $application->transactions()->create($transactionData);
+
+                for ($i = 1; $i <= $application->tenure; $i++) {
+                    $dueDate = Carbon::parse($application->start_date)->addMonths($i);
+                    Schedule::create([
+                        'loan_id' => $application->id,
+                        'due_date' => $dueDate,
+                        'amount_due' => $request->emi,
+                        'status' => 'pending'
+                    ]);
+                }
+
                 $application->notify(new ApplicationSubmitted(
                     $request->first_name . ' ' . $request->last_name,
                     $recordId,
@@ -233,7 +245,10 @@ class ApplicationFormController extends Controller
         try {
             $application->update([
                 'apply_status' => $request->apply_status,
-                'ci_id' => $request->ci_id
+                'ci_id' => $request->ci_id,
+                'from_sched' => $request->from_sched,
+                'to_sched' => $request->to_sched,
+                'reject_reason' => $request->message,
             ]);
 
             $application->notify(new ApplicationStatus($request->apply_status));
