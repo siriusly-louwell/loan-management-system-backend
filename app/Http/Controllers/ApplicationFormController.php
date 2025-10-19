@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use App\Models\ApplicationForm;
 use App\Models\Address;
+use App\Notifications\ApplicationStatus;
 use App\Notifications\ApplicationSubmitted;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -235,6 +236,7 @@ class ApplicationFormController extends Controller
                 'ci_id' => $request->ci_id
             ]);
 
+            $application->notify(new ApplicationStatus($request->apply_status));
             return response()->json([
                 'message' => 'Application updated successfully',
                 'type' => 'success',
