@@ -171,16 +171,6 @@ class ApplicationFormController extends Controller
                 $transactionData = json_decode($request->transaction, true);
                 $application->transactions()->create($transactionData);
 
-                for ($i = 1; $i <= $application->tenure; $i++) {
-                    $dueDate = Carbon::parse($application->start_date)->addMonths($i);
-                    Schedule::create([
-                        'loan_id' => $application->id,
-                        'due_date' => $dueDate,
-                        'amount_due' => $request->emi,
-                        'status' => 'pending'
-                    ]);
-                }
-
                 $application->notify(new ApplicationSubmitted(
                     $request->first_name . ' ' . $request->last_name,
                     $recordId,
@@ -249,6 +239,18 @@ class ApplicationFormController extends Controller
                 'to_sched' => $request->to_sched,
                 'reject_reason' => $request->message,
             ]);
+
+            if ($request->apply_status == "approved") {
+                for ($i = 1; $i <= $request->tenure; $i++) {
+                    $dueDate = Carbon::parse($request->due_date)->addMonths($i);
+                    $application->schedules()->create([
+                        'application_form_id' => $application->id,
+                        'due_date' => $dueDate,
+                        'amount_due' => $request->emi,
+                        'status' => 'pending'
+                    ]);
+                }
+            }
 
             return response()->json([
                 'message' => 'Application updated successfully',
