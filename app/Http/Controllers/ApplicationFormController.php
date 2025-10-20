@@ -253,7 +253,14 @@ class ApplicationFormController extends Controller
                 }
             }
 
-            $application->notify(new ApplicationStatus($request->apply_status));
+            $application->notify(new ApplicationStatus([
+                'status' => $request->apply_status,
+                'recordID' => $application->record_id,
+                'type' => $request->type,
+                'message' => $request->message,
+                'resubmit' => $request->resubmit
+            ]));
+
             return response()->json([
                 'message' => 'Application updated successfully',
                 'type' => 'success',

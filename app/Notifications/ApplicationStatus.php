@@ -11,20 +11,16 @@ class ApplicationStatus extends Notification
 {
     use Queueable;
 
-    protected $status;
-    protected $recordID;
-    protected $reasons;
+    protected $statusData;
 
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct($status, $recordID = null, $reasons = null)
+    public function __construct($statusData)
     {
-        $this->status = $status;
-        $this->recordID = $recordID;
-        $this->reasons = $reasons;
+        $this->statusData = $statusData;
     }
 
     /**
@@ -46,7 +42,7 @@ class ApplicationStatus extends Notification
      */
     public function toMail($notifiable)
     {
-        switch ($this->status) {
+        switch ($this->statusData['status']) {
             case 'accepted':
                 return $this->acceptedMail();
             case 'denied':
@@ -80,21 +76,39 @@ class ApplicationStatus extends Notification
             ->line('Your application has been **accepted** by our staff after verification of your submitted details.')
             ->line('It is now being forwarded to our Credit Investigation (CI) team for further evaluation.')
             ->line('You may continue tracking the progress of your application using the record ID below:')
-            ->line('**Record ID:** `' . $this->recordID . '`')
-            ->action('Track My Application', url('/find-application?record=' . $this->recordID))
-            ->salutation('Thank you for your continued patience,<br>**Rhean Motor Center Inc.**');
+            ->line('**Record ID:** `' . $this->statusData['recordID'] . '`')
+            ->action('Track My Application', url('http://localhost:3000/find'))
+            ->salutation('Thank you for your continued patience, **Rhean Motor Center Inc.**');
     }
 
     protected function deniedMail()
     {
-        return (new MailMessage)
+        $resonType = '';
+
+        switch ($this->statusData['type']) {
+            case 'incorrect_info':
+                $resonType =  'Incorrect inputted values';
+                break;
+            case 'incorrect_file':
+                $resonType  = 'Wrong requirements uploaded';
+                break;
+            default:
+                $resonType = 'Unmet standards';
+        }
+
+        $message = (new MailMessage)
             ->subject('Application Denied')
             ->line('After reviewing your application, we found issues that prevent us from proceeding at this time.')
             ->line('Below are the details provided by our staff:')
-            ->line('<<Reasons here>>')
-            ->line('You may correct the issues and reapply through our online portal.')
-            ->action('Reapply Now', url('/apply'))
-            ->salutation('Thank you for your interest,<br>**Rhean Motor Center Inc.**');
+            ->line('**' . $resonType . '**')
+            ->line($this->statusData['message']);
+
+        if (isset($this->statusData['resubmit']) && $this->statusData['resubmit'] === 'yes') {
+            $message->line('You may correct the issues and reapply through our online portal.')
+                ->action('Reapply Now', url('#'));
+        }
+
+        return $message->salutation('Thank you for your interest, **Rhean Motor Center Inc.**');
     }
 
     protected function approvedMail()
@@ -103,9 +117,9 @@ class ApplicationStatus extends Notification
             ->subject('Loan Application Approved')
             ->line('Congratulations! Your loan application has been **approved** after full evaluation by our Credit Investigation team and administrative review.')
             ->line('Your loan is now valid and ready for processing. Our staff will contact you shortly to finalize your documentation and release schedule.')
-            ->line('**Record ID:** `' . $this->recordID . '`')
-            ->action('View Application Details', url('/find-application?record=' . $this->recordID))
-            ->salutation('We appreciate your trust in us,<br>**Rhean Motor Center Inc.**');
+            ->line('**Record ID:** `' . $this->statusData['recordID'] . '`')
+            ->action('View Application Details', url('http://localhost:3000/find'))
+            ->salutation('We appreciate your trust in us, **Rhean Motor Center Inc.**');
     }
 
     protected function declinedMail()
@@ -114,9 +128,9 @@ class ApplicationStatus extends Notification
             ->subject('Application Declined')
             ->line('After final evaluation by our administrative team, your loan application has been **declined**.')
             ->line('We encourage you to review our application requirements and submit a new request if your circumstances change.')
-            ->line('<<Reasons here>>')
+            ->line($this->statusData['message'])
             ->action('View Application Portal', url('/apply'))
-            ->salutation('Sincerely,<br>**Rhean Motor Center Inc.**');
+            ->salutation('Sincerely, **Rhean Motor Center Inc.**');
     }
 
     protected function genericMail()
@@ -124,8 +138,8 @@ class ApplicationStatus extends Notification
         return (new MailMessage)
             ->subject('Application Status Updated')
             ->line('The status of your application has been updated.')
-            ->line('**Record ID:** `' . $this->recordID . '`')
-            ->action('View Status', url('/find-application?record=' . $this->recordID))
-            ->salutation('Best regards,<br>**Rhean Motor Center Inc.**');
+            ->line('**Record ID:** `' . $this->statusData['recordID'] . '`')
+            ->action('View Status', url('http://localhost:3000/find'))
+            ->salutation('Best regards, **Rhean Motor Center Inc.**');
     }
 }
