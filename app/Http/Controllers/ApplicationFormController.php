@@ -251,6 +251,18 @@ class ApplicationFormController extends Controller
                 'reject_reason' => $request->message,
             ]);
 
+            if ($request->apply_status == "approved") {
+                for ($i = 1; $i <= $request->tenure; $i++) {
+                    $dueDate = Carbon::parse($application->due_date)->addMonths($i);
+                    $application->schedules()->create([
+                        'application_form_id' => $application->id,
+                        'due_date' => $dueDate,
+                        'amount_due' => $request->emi,
+                        'status' => 'pending'
+                    ]);
+                }
+            }
+
             $application->notify(new ApplicationStatus($request->apply_status));
             return response()->json([
                 'message' => 'Application updated successfully',
