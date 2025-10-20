@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use App\Models\ApplicationForm;
 use App\Models\Address;
+use App\Notifications\ApplicationStatus;
 use App\Models\Schedule;
 use App\Notifications\ApplicationSubmitted;
 use Illuminate\Http\Request;
@@ -252,6 +253,7 @@ class ApplicationFormController extends Controller
                 }
             }
 
+            $application->notify(new ApplicationStatus($request->apply_status));
             return response()->json([
                 'message' => 'Application updated successfully',
                 'type' => 'success',

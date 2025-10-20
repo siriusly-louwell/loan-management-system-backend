@@ -12,7 +12,8 @@ class Schedule extends Model
 
     protected $guarded = ['id'];
 
-    public function application() {
+    public function application()
+    {
         return $this->belongsTo(ApplicationForm::class, 'application_form_id');
     }
 }
