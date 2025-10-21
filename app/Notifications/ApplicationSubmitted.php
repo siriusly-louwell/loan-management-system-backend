@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ApplicationSubmitted extends Notification
@@ -16,6 +17,7 @@ class ApplicationSubmitted extends Notification
     protected $applicantName;
     protected $recordID;
     protected $transaction;
+    private $motorcycle;
 
     /**
      * Create a new notification instance.
@@ -27,6 +29,7 @@ class ApplicationSubmitted extends Notification
         $this->applicantName = $applicantName;
         $this->recordID = $recordId;
         $this->transaction = $transaction;
+        $this->motorcycle = Motorcycle::where('id', $transaction['motorcycle_id'])->firstOrFail();
     }
 
     /**
@@ -49,7 +52,7 @@ class ApplicationSubmitted extends Notification
     public function toMail($notifiable)
     {
         $transaction = $this->transaction;
-        $motorcycle = Motorcycle::where('id', $transaction['motorcycle_id'])->firstOrFail();
+        // $motorcycle = Motorcycle::where('id', $transaction['motorcycle_id'])->firstOrFail();
 
         return (new MailMessage)
             ->subject('Your Loan Application Has Been Received')
@@ -57,8 +60,8 @@ class ApplicationSubmitted extends Notification
             ->line('Thank you for submitting your loan application to **Rhean Motor Center Inc.**')
             ->line('We have successfully received your application and it is now under review by our staff.')
             ->line('Here are the details of your transaction:')
-            ->line('**Motorcycle:** `' . $motorcycle['name'] . '`')
-            ->line('**Brand:** `' . $motorcycle['brand'] . '`')
+            ->line('**Motorcycle:** `' . $this->motorcycle['name'] . '`')
+            ->line('**Brand:** `' . $this->motorcycle['brand'] . '`')
             ->line('**Color:** `' . $transaction['color'] . '`')
             ->line('**Down Payment:** ₱`' . $transaction['downpayment'] . '`')
             ->line('**Quantity:** `' . $transaction['quantity'] . '` unit/s')
@@ -71,42 +74,24 @@ class ApplicationSubmitted extends Notification
     }
 
     /**
-     * Builds a simple HTML table for transaction data.
+     * Send SMS
      */
-    protected function buildTransactionTable()
+    public function toSms($notifiable, $motorcycle, $transaction)
     {
-        $transaction = $this->transaction;
+        $message =
+            "Rhean Motor Center: Your loan application (Record ID: {$this->recordID}) has been received.\n" .
+            "Motorcycle: {$motorcycle['brand']} {$motorcycle['name']}\n" .
+            "Downpayment: ₱{$transaction['downpayment']}\n" .
+            "Color: {$transaction['color']}\n" .
+            "Tenure: {$transaction['tenure']} year/s\n" .
+            "Track status: rhean-motor-center.com/find";
 
-        $colorPreview = '<span style="display:inline-block; width:14px; height:14px; background-color: '
-            . e($transaction['color']) . '; border: 1px solid #ccc; vertical-align:middle; margin-right:6px;"></span>'
-            . e($transaction['color']);
-
-        $table = <<<HTML
-        <table style="width:100%; border-collapse: collapse; margin-top:12px;">
-            <tr>
-                <td style="padding:6px 0; color:#111827;"><strong>Motorcycle:</strong></td>
-                <td style="padding:6px 0;">{$transaction['motorcycle_id']}</td>
-            </tr>
-            <tr>
-                <td style="padding:6px 0; color:#111827;"><strong>Color:</strong></td>
-                <td style="padding:6px 0;">{$colorPreview}</td>
-            </tr>
-            <tr>
-                <td style="padding:6px 0; color:#111827;"><strong>Downpayment:</strong></td>
-                <td style="padding:6px 0;">₱{$transaction['downpayment']}</td>
-            </tr>
-            <tr>
-                <td style="padding:6px 0; color:#111827;"><strong>Quantity:</strong></td>
-                <td style="padding:6px 0;">{$transaction['quantity']}</td>
-            </tr>
-            <tr>
-                <td style="padding:6px 0; color:#111827;"><strong>Tenure:</strong></td>
-                <td style="padding:6px 0;">{$transaction['tenure']} months</td>
-            </tr>
-        </table>
-        HTML;
-
-        return $table;
+        Http::post('https://api.semaphore.co/api/v4/messages', [
+            'apikey' => env('SEMAPHORE_API_KEY'),
+            'number' => $notifiable->phone_number,
+            'message' => $message,
+            'sendername' => 'RHEANMC',
+        ]);
     }
 
     /**
