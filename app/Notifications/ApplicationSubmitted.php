@@ -54,6 +54,8 @@ class ApplicationSubmitted extends Notification
         $transaction = $this->transaction;
         // $motorcycle = Motorcycle::where('id', $transaction['motorcycle_id'])->firstOrFail();
 
+        // $response = $this->toSMS($notifiable->contact);
+        // Log::info($response);
         return (new MailMessage)
             ->subject('Your Loan Application Has Been Received')
             ->greeting('Hello ' . $this->applicantName . ',')
@@ -62,10 +64,10 @@ class ApplicationSubmitted extends Notification
             ->line('Here are the details of your transaction:')
             ->line('**Motorcycle:** `' . $this->motorcycle['name'] . '`')
             ->line('**Brand:** `' . $this->motorcycle['brand'] . '`')
-            ->line('**Color:** `' . $transaction['color'] . '`')
-            ->line('**Down Payment:** ₱`' . $transaction['downpayment'] . '`')
-            ->line('**Quantity:** `' . $transaction['quantity'] . '` unit/s')
-            ->line('**Tenure:** `' . $transaction['tenure'] . '` year/s')
+            ->line('**Color:** `' . $this->transaction['color'] . '`')
+            ->line('**Down Payment:** ₱`' . $this->transaction['downpayment'] . '`')
+            ->line('**Quantity:** `' . $this->transaction['quantity'] . '` unit/s')
+            ->line('**Tenure:** `' . $this->transaction['tenure'] . '` year/s')
             ->line('You can track the status of your application anytime by visiting our website and entering your record ID below.')
             ->line('**Record ID:** `' . $this->recordID . '`')
             ->action('Find My Application', url('http://localhost:3000/find'))
@@ -76,21 +78,22 @@ class ApplicationSubmitted extends Notification
     /**
      * Send SMS
      */
-    public function toSms($notifiable, $motorcycle, $transaction)
+    public function toSms($contact)
     {
         $message =
             "Rhean Motor Center: Your loan application (Record ID: {$this->recordID}) has been received.\n" .
-            "Motorcycle: {$motorcycle['brand']} {$motorcycle['name']}\n" .
-            "Downpayment: ₱{$transaction['downpayment']}\n" .
-            "Color: {$transaction['color']}\n" .
-            "Tenure: {$transaction['tenure']} year/s\n" .
+            "Motorcycle: {$this->motorcycle['brand']} {$this->motorcycle['name']}\n" .
+            "Down Payment: ₱{$this->transaction['downpayment']}\n" .
+            "Color: {$this->transaction['color']}\n" .
+            "Tenure: {$this->transaction['tenure']} year/s\n" .
             "Track status: rhean-motor-center.com/find";
 
         Http::post('https://api.semaphore.co/api/v4/messages', [
-            'apikey' => env('SEMAPHORE_API_KEY'),
-            'number' => $notifiable->phone_number,
+            'apikey' => 'd6c11eecdd39bbf6780e0bcd8f26722c',
+            // 'apikey' => env('SEMAPHORE_API_KEY'),
+            'number' => $contact,
             'message' => $message,
-            'sendername' => 'RHEANMC',
+            'sendername' => 'Rhean Motor Center Inc.',
         ]);
     }
 
