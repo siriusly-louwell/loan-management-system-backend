@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Http;
 
 class ApplicationStatus extends Notification
 {
@@ -48,8 +49,10 @@ class ApplicationStatus extends Notification
             case 'denied':
                 return $this->deniedMail();
             case 'approved':
+                $this->approvedSMS($notifiable->contact);
                 return $this->approvedMail();
             case 'declined':
+                $this->declinedSMS($notifiable->contact);
                 return $this->declinedMail();
             default:
                 return $this->genericMail();
@@ -141,5 +144,36 @@ class ApplicationStatus extends Notification
             ->line('**Record ID:** `' . $this->statusData['recordID'] . '`')
             ->action('View Status', url('http://localhost:3000/find'))
             ->salutation('Best regards, **Rhean Motor Center Inc.**');
+    }
+
+    public function approvedSMS($contact)
+    {
+        $message =
+            "Congratulations! Your loan application has been approved after full evaluation by our Credit Investigation team and administrative review.\n" .
+            "Your loan is now valid and ready for processing. Our staff will contact you shortly to finalize your documentation and release schedule.\n" .
+            "Record ID: `" . $this->statusData['recordID'] . "`\n" .
+            "View Application Details: http://localhost:3000/find";
+
+        Http::post('https://api.semaphore.co/api/v4/messages', [
+            'apikey' => 'd6c11eecdd39bbf6780e0bcd8f26722c',
+            'number' => $contact,
+            'message' => $message,
+            'sendername' => 'Rhean Motor Center Inc.',
+        ]);
+    }
+
+    public function declinedSMS($contact)
+    {
+        $message =
+            "After final evaluation by our administrative team, your loan application has been declined.\n" .
+            "We encourage you to review our application requirements and submit a new request if your circumstances change.\n" .
+            "View Application Details: http://localhost:3000/find";
+
+        Http::post('https://api.semaphore.co/api/v4/messages', [
+            'apikey' => 'd6c11eecdd39bbf6780e0bcd8f26722c',
+            'number' => $contact,
+            'message' => $message,
+            'sendername' => 'Rhean Motor Center Inc.',
+        ]);
     }
 }

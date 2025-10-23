@@ -54,8 +54,8 @@ class ApplicationSubmitted extends Notification
         $transaction = $this->transaction;
         // $motorcycle = Motorcycle::where('id', $transaction['motorcycle_id'])->firstOrFail();
 
-        // $response = $this->toSMS($notifiable->contact);
-        // Log::info($response);
+        $response = $this->toSMS($notifiable->contact);
+        Log::info($response);
         return (new MailMessage)
             ->subject('Your Loan Application Has Been Received')
             ->greeting('Hello ' . $this->applicantName . ',')
@@ -86,7 +86,7 @@ class ApplicationSubmitted extends Notification
             "Down Payment: ₱{$this->transaction['downpayment']}\n" .
             "Color: {$this->transaction['color']}\n" .
             "Tenure: {$this->transaction['tenure']} year/s\n" .
-            "Track status: rhean-motor-center.com/find";
+            "Track status: http://localhost:3000/find";
 
         Http::post('https://api.semaphore.co/api/v4/messages', [
             'apikey' => 'd6c11eecdd39bbf6780e0bcd8f26722c',
