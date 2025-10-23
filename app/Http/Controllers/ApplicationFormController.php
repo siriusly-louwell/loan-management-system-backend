@@ -8,6 +8,7 @@ use App\Models\Address;
 use App\Notifications\ApplicationStatus;
 use App\Models\Schedule;
 use App\Notifications\ApplicationSubmitted;
+use App\Notifications\PaymentReminder;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;

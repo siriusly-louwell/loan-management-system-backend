@@ -86,24 +86,24 @@ class ApplicationStatus extends Notification
 
     protected function deniedMail()
     {
-        $resonType = '';
+        $reasonType = '';
 
         switch ($this->statusData['type']) {
             case 'incorrect_info':
-                $resonType =  'Incorrect inputted values';
+                $reasonType =  'Incorrect inputted values';
                 break;
             case 'incorrect_file':
-                $resonType  = 'Wrong requirements uploaded';
+                $reasonType  = 'Wrong requirements uploaded';
                 break;
             default:
-                $resonType = 'Unmet standards';
+                $reasonType = 'Unmet standards';
         }
 
         $message = (new MailMessage)
             ->subject('Application Denied')
             ->line('After reviewing your application, we found issues that prevent us from proceeding at this time.')
             ->line('Below are the details provided by our staff:')
-            ->line('**' . $resonType . '**')
+            ->line('**' . $reasonType . '**')
             ->line($this->statusData['message']);
 
         if (isset($this->statusData['resubmit']) && $this->statusData['resubmit'] === 'yes') {

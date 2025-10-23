@@ -16,4 +16,9 @@ class Schedule extends Model
     {
         return $this->belongsTo(ApplicationForm::class, 'application_form_id');
     }
+
+    public function application_form()
+    {
+        return $this->belongsTo(ApplicationForm::class);
+    }
 }
