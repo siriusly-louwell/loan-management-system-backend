@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Http\Controllers\Controller;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -52,6 +53,21 @@ class PaymentController extends Controller
                 'amount_paid' => $validated['amount_paid'],
                 'status' => $request->status
             ]);
+
+            $schedule = Schedule::where('application_form_id', $request->application_form_id)
+                ->where('status', 'pending')
+                ->orderBy('due_date', 'asc')
+                ->first();
+
+            if ($schedule) {
+                $schedule->status = $request->status;
+                $schedule->save();
+            } else {
+                return response()->json([
+                    'message' => 'No pending schedule found for this application',
+                    'type' => 'error'
+                ], 404);
+            }
 
             return response()->json(['message' => 'Payment saved successfully!', 'type' => 'success'], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
