@@ -234,26 +234,35 @@ class ApplicationFormController extends Controller
     public function update(Request $request, ApplicationForm $application)
     {
         try {
-            $application->update([
-                'apply_status' => $request->apply_status,
-                'ci_id' => $request->ci_id,
-                'from_sched' => $request->from_sched,
-                'to_sched' => $request->to_sched,
-                'reject_reason' => $request->message,
-            ]);
+            $updateData = ['apply_status' => $request->apply_status];
 
-            if ($request->apply_status == "approved") {
-                for ($i = 1; $i <= $request->tenure; $i++) {
-                    $dueDate = Carbon::parse($request->due_date)->addMonths($i);
-                    $application->schedules()->create([
-                        'application_form_id' => $application->id,
-                        'due_date' => $dueDate,
-                        'amount_due' => $request->emi,
-                        'status' => 'pending'
-                    ]);
-                }
+            switch ($request->apply_status) {
+                case 'accepted':
+                    $updateData += [
+                        'ci_id' => $request->ci_id,
+                        'from_sched' => $request->from_sched,
+                        'to_sched' => $request->to_sched,
+                    ];
+                    break;
+                case 'denied':
+                case 'declined':
+                    $updateData['reject_reason'] = $request->message;
+                    break;
+                case 'approved':
+                    $dueDate = Carbon::parse($request->due_date);
+                    $schedules = collect(range(1, $request->tenure))->map(function ($month) use ($request, $application, $dueDate) {
+                        return [
+                            'application_form_id' => $application->id,
+                            'due_date' => $dueDate->copy()->addMonths($month),
+                            'amount_due' => $request->emi,
+                            'status' => 'pending'
+                        ];
+                    });
+                    $application->schedules()->createMany($schedules);
+                    break;
             }
 
+            $application->update($updateData);
             $application->notify(new ApplicationStatus([
                 'status' => $request->apply_status,
                 'recordID' => $application->record_id,
@@ -268,7 +277,7 @@ class ApplicationFormController extends Controller
                 'data' => $application
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['errors ' => $e->errors()], 422);
+            return response()->json(['errors' => $e->errors()], 422);
         }
     }
 

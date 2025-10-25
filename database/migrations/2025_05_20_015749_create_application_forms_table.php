@@ -22,6 +22,7 @@ return new class extends Migration
             $table->foreignId('ci_id')->nullable()->constrained('users')->onDelete('SET NULL');
             $table->string('record_id');
             $table->string('apply_status');
+            $table->string('isCanceled')->nullable();
             $table->string('first_name');
             $table->string('middle_name')->nullable();
             $table->string('last_name');

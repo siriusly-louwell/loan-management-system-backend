@@ -10,15 +10,7 @@ class Payment extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'application_form_id',
-        'cert_num',
-        'issued_at',
-        'prev_balance',
-        'curr_balance',
-        'amount_paid',
-        'status'
-    ];
+    protected $guarded = ['id'];
 
     public function application()
     {

@@ -8,6 +8,8 @@ use App\Models\ApplicationForm;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Hamcrest\Type\IsInteger;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -42,37 +44,32 @@ class PaymentController extends Controller
     {
         try {
             $validated = $request->validate([
-                'amount_paid' => 'required|integer',
+                'amount_paid' => 'required|numeric',
                 'application_form_id' => 'required|integer'
             ]);
 
             $this->validatePayment($validated['amount_paid'], $request->application_form_id);
-
-            // 1. Get current schedule and validate
-            $schedule = Schedule::select('id', 'amount_due', 'status', 'due_date', 'payment_id')
+            $schedule = Schedule::select('id', 'amount_due', 'status', 'due_date')
                 ->where('application_form_id', $validated['application_form_id'])
                 ->where('status', 'pending')
                 ->orderBy('due_date', 'asc')
                 ->first();
 
-            if (!$schedule) {
+            if (!$schedule)
                 return response()->json([
                     'message' => 'No pending schedule found for this application',
                     'type' => 'error'
                 ], 404);
-            }
 
-            // 2. Determine payment status
             $paymentStatus = $this->determinePaymentStatus($schedule->due_date);
 
-            // 3. Handle payment distribution if amount exceeds schedule
+            // ? Handle payment distribution if amount exceeds schedule
             if ($validated['amount_paid'] > $schedule->amount_due) {
                 $payments = $this->distributePayment(
                     $validated['application_form_id'],
                     $validated['amount_paid']
                 );
 
-                // Create multiple payment records
                 foreach ($payments as $paymentData) {
                     Payment::create(array_merge($paymentData, [
                         'status' => $paymentStatus,
@@ -81,7 +78,7 @@ class PaymentController extends Controller
                     ]));
                 }
             } else {
-                // Handle single payment
+                // ? Handle single payment
                 $totalPreviousPayments = Payment::where('application_form_id', $validated['application_form_id'])
                     ->where('schedule_id', $schedule->id)
                     ->sum('amount_paid');
@@ -101,9 +98,7 @@ class PaymentController extends Controller
                 }
             }
 
-            // 4. Update application status
             $this->updateApplicationStatus($validated['application_form_id']);
-
             return response()->json([
                 'message' => 'Payment saved successfully!',
                 'type' => 'success'
@@ -306,7 +301,7 @@ class PaymentController extends Controller
                 ->first();
 
             if (!$nextSchedule) {
-                // Store excess as credit or handle according to business rules
+                // ? Store excess as credit or handle according to business rules
                 break;
             }
 
