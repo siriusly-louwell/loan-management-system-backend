@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\CiReport;
 use App\Models\Transaction;
 use App\Models\Payment;
+use App\Models\CreditHistory;
 use App\Models\Schedule;
 
 class ApplicationForm extends Model
@@ -38,6 +39,11 @@ class ApplicationForm extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function credits()
+    {
+        return $this->hasMany(CreditHistory::class);
     }
 
     public function payment()

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use App\Models\ApplicationForm;
 use App\Models\Address;
+use App\Models\CreditHistory;
 use App\Notifications\ApplicationStatus;
 use App\Models\Schedule;
 use App\Notifications\ApplicationSubmitted;
@@ -172,6 +173,11 @@ class ApplicationFormController extends Controller
 
                 $transactionData = json_decode($request->transaction, true);
                 $application->transactions()->create($transactionData);
+                $application->credits()->create([
+                    'user_id' => $request->user_id,
+                    'status' => 'ongoing',
+                    'amount' => $transactionData['price']
+                ]);
 
                 $application->notify(new ApplicationSubmitted(
                     $request->first_name . ' ' . $request->last_name,
@@ -250,14 +256,19 @@ class ApplicationFormController extends Controller
                     break;
                 case 'approved':
                     $dueDate = Carbon::parse($request->due_date);
-                    $schedules = collect(range(1, $request->tenure))->map(function ($month) use ($request, $application, $dueDate) {
-                        return [
-                            'application_form_id' => $application->id,
-                            'due_date' => $dueDate->copy()->addMonths($month),
-                            'amount_due' => $request->emi,
-                            'status' => 'pending'
-                        ];
-                    });
+                    $finalDueDate = $dueDate->copy()->addMonths($request->tenure);
+
+                    $application->credits()->update(['due_date' => $finalDueDate]);
+                    $schedules = collect(range(1, $request->tenure))
+                        ->map(function ($month) use ($request, $application, $dueDate) {
+                            return [
+                                'application_form_id' => $application->id,
+                                'due_date' => $dueDate->copy()->addMonths($month),
+                                'amount_due' => $request->emi,
+                                'status' => 'pending'
+                            ];
+                        });
+
                     $application->schedules()->createMany($schedules);
                     break;
             }

@@ -118,6 +118,7 @@ class UserController extends Controller
                     $user = User::create($arr);
                     $application->user_id = $user->id;
                     $application->save();
+                    $application->credits()->update(['user_id' => $user->id]);
                 } else return response()->json(['message' => 'Your account is not approved yet', 'type' => 'invalid']);
             } else {
                 // $pfp = ($request->hasFile('pfp')) ? $request->file('pfp')->store('uploads', 'public') : null;
