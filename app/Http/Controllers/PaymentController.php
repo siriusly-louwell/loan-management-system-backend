@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Http\Controllers\Controller;
+use App\Models\ApplicationForm;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -41,37 +42,78 @@ class PaymentController extends Controller
     {
         try {
             $validated = $request->validate([
-                'amount_paid' => 'required|integer'
+                'amount_paid' => 'required|integer',
+                'application_form_id' => 'required|integer'
             ]);
 
-            $motor = Payment::create([
-                'application_form_id' => $request->application_form_id,
-                'cert_num' => $request->cert_num,
-                'issued_at' => $request->issued_at,
-                'prev_balance' => $request->prev_balance,
-                'curr_balance' => $request->prev_balance - $validated['amount_paid'],
-                'amount_paid' => $validated['amount_paid'],
-                'status' => $request->status
-            ]);
+            $this->validatePayment($validated['amount_paid'], $request->application_form_id);
 
-            $schedule = Schedule::where('application_form_id', $request->application_form_id)
+            // 1. Get current schedule and validate
+            $schedule = Schedule::select('id', 'amount_due', 'status', 'due_date', 'payment_id')
+                ->where('application_form_id', $validated['application_form_id'])
                 ->where('status', 'pending')
                 ->orderBy('due_date', 'asc')
                 ->first();
 
-            if ($schedule) {
-                $schedule->status = $request->status;
-                $schedule->save();
-            } else {
+            if (!$schedule) {
                 return response()->json([
                     'message' => 'No pending schedule found for this application',
                     'type' => 'error'
                 ], 404);
             }
 
-            return response()->json(['message' => 'Payment saved successfully!', 'type' => 'success'], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['errors ' => $e->errors()], 422);
+            // 2. Determine payment status
+            $paymentStatus = $this->determinePaymentStatus($schedule->due_date);
+
+            // 3. Handle payment distribution if amount exceeds schedule
+            if ($validated['amount_paid'] > $schedule->amount_due) {
+                $payments = $this->distributePayment(
+                    $validated['application_form_id'],
+                    $validated['amount_paid']
+                );
+
+                // Create multiple payment records
+                foreach ($payments as $paymentData) {
+                    Payment::create(array_merge($paymentData, [
+                        'status' => $paymentStatus,
+                        'cert_num' => $request->cert_num,
+                        'issued_at' => $request->issued_at
+                    ]));
+                }
+            } else {
+                // Handle single payment
+                $totalPreviousPayments = Payment::where('application_form_id', $validated['application_form_id'])
+                    ->where('schedule_id', $schedule->id)
+                    ->sum('amount_paid');
+
+                Payment::create([
+                    'application_form_id' => $validated['application_form_id'],
+                    'schedule_id' => $schedule->id,
+                    'cert_num' => $request->cert_num,
+                    'issued_at' => $request->issued_at,
+                    'amount_paid' => $validated['amount_paid'],
+                    'status' => $paymentStatus
+                ]);
+
+                if (($totalPreviousPayments + $validated['amount_paid']) >= $schedule->amount_due) {
+                    $schedule->status = 'paid';
+                    $schedule->save();
+                }
+            }
+
+            // 4. Update application status
+            $this->updateApplicationStatus($validated['application_form_id']);
+
+            return response()->json([
+                'message' => 'Payment saved successfully!',
+                'type' => 'success'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error processing payment',
+                'type' => 'error',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -207,5 +249,81 @@ class PaymentController extends Controller
                 'increment_type' => $totalDiff > 0 ? 'incremented' : ($totalDiff < 0 ? 'decremented' : 'neutral'),
             ],
         ]);
+    }
+
+    private function validatePayment($amount, $applicationId)
+    {
+        // Check if amount is positive
+        if ($amount <= 0) {
+            throw new \Exception('Payment amount must be positive');
+        }
+
+        // Check if total payments don't exceed total loan amount
+        $totalLoanAmount = Schedule::where('application_form_id', $applicationId)
+            ->sum('amount_due');
+        $totalPaid = Payment::where('application_form_id', $applicationId)
+            ->sum('amount_paid');
+
+        if (($totalPaid + $amount) > $totalLoanAmount) {
+            throw new \Exception('Payment exceeds total loan amount');
+        }
+    }
+
+    private function determinePaymentStatus($dueDate, $gracePeriodDays = 3)
+    {
+        $currentDate = Carbon::now();
+        $dueDate = Carbon::parse($dueDate);
+        $graceDate = $dueDate->copy()->addDays($gracePeriodDays);
+
+        if ($currentDate->isAfter($graceDate)) {
+            return 'late';
+        }
+        return 'on_time';
+    }
+
+    private function updateApplicationStatus($applicationId)
+    {
+        $totalSchedules = Schedule::where('application_form_id', $applicationId)->count();
+        $paidSchedules = Schedule::where('application_form_id', $applicationId)
+            ->where('status', 'paid')
+            ->count();
+
+        $status = ($totalSchedules === $paidSchedules) ? 'paid' : 'incomplete';
+
+        ApplicationForm::where('id', $applicationId)
+            ->update(['apply_status' => $status]);
+    }
+
+    private function distributePayment($applicationId, $amount)
+    {
+        $remainingAmount = $amount;
+        $payments = [];
+
+        while ($remainingAmount > 0) {
+            $nextSchedule = Schedule::where('application_form_id', $applicationId)
+                ->where('status', 'pending')
+                ->orderBy('due_date', 'asc')
+                ->first();
+
+            if (!$nextSchedule) {
+                // Store excess as credit or handle according to business rules
+                break;
+            }
+
+            $paymentAmount = min($remainingAmount, $nextSchedule->amount_due);
+            $payments[] = [
+                'schedule_id' => $nextSchedule->id,
+                'amount_paid' => $paymentAmount,
+                'application_form_id' => $applicationId
+            ];
+
+            $remainingAmount -= $paymentAmount;
+            if ($paymentAmount >= $nextSchedule->amount_due) {
+                $nextSchedule->status = 'paid';
+                $nextSchedule->save();
+            }
+        }
+
+        return $payments;
     }
 }

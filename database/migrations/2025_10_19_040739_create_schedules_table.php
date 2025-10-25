@@ -17,7 +17,6 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('application_form_id');
             $table->foreign('application_form_id')->references('id')->on('application_forms');
-            $table->foreignId('payment_id')->nullable()->constrained('payments')->onDelete('SET NULL');
             $table->date('due_date');
             $table->decimal('amount_due');
             $table->string('status');

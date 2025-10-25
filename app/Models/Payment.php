@@ -11,10 +11,22 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'application_form_id', 'cert_num', 'issued_at', 'prev_balance', 'curr_balance', 'amount_paid', 'status'
+        'application_form_id',
+        'cert_num',
+        'issued_at',
+        'prev_balance',
+        'curr_balance',
+        'amount_paid',
+        'status'
     ];
 
-    public function application() {
+    public function application()
+    {
         return $this->belongsTo(ApplicationForm::class, 'application_form_id');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
     }
 }

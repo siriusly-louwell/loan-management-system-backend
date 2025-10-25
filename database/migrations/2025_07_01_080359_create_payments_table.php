@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('application_form_id');
             $table->foreign('application_form_id')->references('id')->on('application_forms');
+            $table->foreignId('schedule_id')->nullable()->constrained('schedules')->onDelete('SET NULL');
             $table->string('cert_num');
             $table->text('issued_at');
             $table->decimal('prev_balance', 20, 2);
