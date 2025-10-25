@@ -20,9 +20,7 @@ return new class extends Migration
             $table->foreignId('schedule_id')->nullable()->constrained('schedules')->onDelete('SET NULL');
             $table->string('cert_num');
             $table->text('issued_at');
-            $table->decimal('prev_balance', 20, 2);
             $table->decimal('amount_paid', 20, 0);
-            $table->decimal('curr_balance', 20, 0);
             $table->string('status');
             $table->timestamps();
         });

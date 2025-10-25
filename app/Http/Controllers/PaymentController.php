@@ -120,13 +120,21 @@ class PaymentController extends Controller
      */
     public function show($value)
     {
-        // $payment = Payment::where('application_form_id', $value)->get()->first();
-        // return response()->json($payment);
-
         $by = request()->query('by');
-        $application = Payment::where($by, $value)->first();
+        $isLatest = filter_var(request()->query('isLatest'), FILTER_VALIDATE_BOOLEAN);
 
-        return response()->json($application);
+        $query = Payment::where($by, $value);
+
+        if ($isLatest) {
+            $payment = $query
+                ->orderByDesc('created_at')
+                ->orderByDesc('schedule_id')
+                ->first();
+        } else {
+            $payment = $query->first();
+        }
+
+        return response()->json($payment);
     }
 
     /**
