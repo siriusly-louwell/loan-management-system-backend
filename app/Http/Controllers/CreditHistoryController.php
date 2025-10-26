@@ -12,9 +12,40 @@ class CreditHistoryController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $perPage = $request->input('per_page', 10);
+        $credits = CreditHistory::query();
+
+        if ($request->has('customer')) {
+            $customer = $request->input('customer');
+
+            $credits->when($customer, function ($query, $customer) {
+                $query->where('user_id', $customer);
+            });
+        }
+
+        if ($request->has('search')) {
+            $search = $request->input('search');
+
+            $credits->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('status', 'like', "%{$search}%")
+                        ->orWhere('amount', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        if ($request->has('min') || $request->has('max')) {
+            $min = $request->input('min');
+            $max = $request->input('max');
+            $type = $request->input('type');
+
+            $credits->when($min, fn($q) => $q->where($type, '>=', $min))
+                ->when($max, fn($q) => $q->where($type, '<=', $max));
+        }
+
+        return response()->json($credits->orderBy('created_at', 'desc')->paginate($perPage));
     }
 
     /**
@@ -83,7 +114,7 @@ class CreditHistoryController extends Controller
         //
     }
 
-    public function creditScore(Request $request)
+    public function score(Request $request)
     {
         $history = CreditHistory::where('user_id', $request->id)->get();
 
@@ -100,7 +131,8 @@ class CreditHistoryController extends Controller
         $totalLoans = $history->count();
 
         $score = 100 - ($missed * 30) - ($late * 10);
-        $score = max(0, min(100, $score)); // clamp between 0–100
+        // ? clamp between 0–100
+        $score = max(0, min(100, $score));
 
         return response()->json([
             'user_id' => $request->id,

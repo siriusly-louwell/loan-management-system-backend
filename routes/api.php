@@ -8,6 +8,7 @@ use App\Http\Controllers\ApplicationFormController;
 use App\Http\Controllers\CiReportController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Api\Auth\LoginController;
+use App\Http\Controllers\CreditHistoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,8 @@ Route::post('/login', [LoginController::class, 'login']);
 // ? Application Routes
 Route::get('/application/count', [ApplicationFormController::class, 'count']);
 Route::get('/payment/count', [PaymentController::class, 'count']);
+Route::get('/credit/score', [CreditHistoryController::class, 'score']);
 Route::resource('application', ApplicationFormController::class);
 Route::resource('report', CiReportController::class);
 Route::resource('payment', PaymentController::class);
+Route::resource('credit', CreditHistoryController::class);
