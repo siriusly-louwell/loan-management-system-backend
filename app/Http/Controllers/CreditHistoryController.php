@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CreditHistory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class CreditHistoryController extends Controller
@@ -117,14 +118,12 @@ class CreditHistoryController extends Controller
     public function score(Request $request)
     {
         $history = CreditHistory::where('user_id', $request->id)->get();
+        $lastMonthStart = Carbon::now()->subMonth()->startOfMonth();
+        $lastMonthEnd   = Carbon::now()->subMonth()->endOfMonth();
 
-        if ($history->isEmpty()) {
-            return response()->json([
-                'user_id' => $request->id,
-                'score' => 100,
-                'message' => 'No credit history found. Default score applied.'
-            ]);
-        }
+        $lastMonthHistory = CreditHistory::where('user_id', $request->id)
+            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
+            ->get();
 
         $missed = $history->where('status', 'defaulted')->count();
         $late = $history->where('status', 'late')->count();
@@ -134,11 +133,29 @@ class CreditHistoryController extends Controller
         // ? clamp between 0–100
         $score = max(0, min(100, $score));
 
-        return response()->json([
-            'total_loans' => $totalLoans,
-            'late_payments' => $late,
-            'defaulted_loans' => $missed,
-            'score' => $score,
-        ]);
+        $lastMissed = $lastMonthHistory->where('status', 'defaulted')->count();
+        $lastLate = $lastMonthHistory->where('status', 'late')->count();
+        $lastTotalLoans = $lastMonthHistory->count();
+        $lastScore = 100 - ($lastMissed * 30) - ($lastLate * 10);
+        $lastScore = max(0, min(100, $lastScore));
+
+        $compare = function ($current, $previous) {
+            $difference = $current - $previous;
+            $type = $difference > 0 ? 'increase' : ($difference < 0 ? 'decrease' : 'default');
+            return [
+                'value' => $current,
+                'type' => $type,
+                'difference' => abs($difference),
+            ];
+        };
+
+        $result = [
+            'total_loans' => $compare($totalLoans, $lastTotalLoans),
+            'defaulted_loans' => $compare($missed, $lastMissed),
+            'late_payments' => $compare($late, $lastLate),
+            'score' => $compare($score, $lastScore),
+        ];
+
+        return response()->json($result);
     }
 }
