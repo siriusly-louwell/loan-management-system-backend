@@ -214,6 +214,7 @@ class ApplicationFormController extends Controller
             ->where($by, $value)
             ->when($by === 'id', fn($q) => $q->with(['transactions.motorcycle', 'address', 'ciReport']))
             ->when($stff === 'record_id', fn($q) => $q->with(['transactions.motorcycle']))
+            ->orderByDesc('created_at')
             ->first();
 
         return response()->json($application);
