@@ -121,7 +121,7 @@ class CreditHistoryController extends Controller
         if ($history->isEmpty()) {
             return response()->json([
                 'user_id' => $request->id,
-                'credit_score' => 100,
+                'score' => 100,
                 'message' => 'No credit history found. Default score applied.'
             ]);
         }
@@ -135,11 +135,10 @@ class CreditHistoryController extends Controller
         $score = max(0, min(100, $score));
 
         return response()->json([
-            'user_id' => $request->id,
             'total_loans' => $totalLoans,
             'late_payments' => $late,
             'defaulted_loans' => $missed,
-            'credit_score' => $score,
+            'score' => $score,
         ]);
     }
 }

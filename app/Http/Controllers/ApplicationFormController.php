@@ -244,11 +244,7 @@ class ApplicationFormController extends Controller
 
             switch ($request->apply_status) {
                 case 'accepted':
-                    $updateData += [
-                        'ci_id' => $request->ci_id,
-                        'from_sched' => $request->from_sched,
-                        'to_sched' => $request->to_sched,
-                    ];
+                    $updateData['ci_id'] = $request->ci_id;
                     break;
                 case 'denied':
                 case 'declined':
@@ -279,7 +275,8 @@ class ApplicationFormController extends Controller
                 'recordID' => $application->record_id,
                 'type' => $request->type,
                 'message' => $request->message,
-                'resubmit' => $request->resubmit
+                'resubmit' => $request->resubmit,
+                'schedule' => $request->schedule,
             ]));
 
             return response()->json([
