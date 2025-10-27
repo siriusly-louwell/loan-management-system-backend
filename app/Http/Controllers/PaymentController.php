@@ -25,13 +25,15 @@ class PaymentController extends Controller
         $perPage = $request->input('per_page', 10);
         $credits = Payment::with(['application']);
 
-        if ($request->has('customer')) {
-            $customer = $request->input('customer');
+        // if ($request->has('customer')) {
+        //     $customer = $request->input('customer');
 
-            $credits->when($customer, function ($query, $customer) {
-                $query->where('user_id', $customer);
-            });
-        }
+        //     Log::info("is Customer");
+
+        //     $credits->when($customer, function ($query, $customer) {
+        //         $query->where('user_id', $customer);
+        //     });
+        // }
 
         // if ($request->has('search')) {
         //     $search = $request->input('search');
