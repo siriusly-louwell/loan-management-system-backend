@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ApplicationForm;
+use App\Models\User;
+use App\Models\Schedule;
 
 class Payment extends Model
 {
@@ -15,6 +17,11 @@ class Payment extends Model
     public function application()
     {
         return $this->belongsTo(ApplicationForm::class, 'application_form_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function schedules()

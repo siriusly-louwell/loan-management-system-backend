@@ -16,7 +16,7 @@ class CreditHistoryController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-        $credits = CreditHistory::query();
+        $credits = CreditHistory::with(['user', 'application']);
 
         if ($request->has('customer')) {
             $customer = $request->input('customer');
