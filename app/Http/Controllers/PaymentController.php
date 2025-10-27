@@ -17,10 +17,43 @@ class PaymentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $payments = Payment::with('application')->get();
-        return response()->json($payments);
+        // $payments = Payment::with('application')->get();
+        // return response()->json($payments);
+
+        $perPage = $request->input('per_page', 10);
+        $credits = Payment::with(['application']);
+
+        if ($request->has('customer')) {
+            $customer = $request->input('customer');
+
+            $credits->when($customer, function ($query, $customer) {
+                $query->where('user_id', $customer);
+            });
+        }
+
+        // if ($request->has('search')) {
+        //     $search = $request->input('search');
+
+        //     $credits->when($search, function ($query, $search) {
+        //         $query->where(function ($q) use ($search) {
+        //             $q->where('status', 'like', "%{$search}%")
+        //                 ->orWhere('amount', 'like', "%{$search}%");
+        //         });
+        //     });
+        // }
+
+        if ($request->has('min') || $request->has('max')) {
+            $min = $request->input('min');
+            $max = $request->input('max');
+            $type = $request->input('type');
+
+            $credits->when($min, fn($q) => $q->where($type, '>=', $min))
+                ->when($max, fn($q) => $q->where($type, '<=', $max));
+        }
+
+        return response()->json($credits->orderBy('created_at', 'desc')->paginate($perPage));
     }
 
     /**
