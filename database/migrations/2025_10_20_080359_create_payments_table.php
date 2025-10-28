@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('cert_num');
             $table->text('issued_at');
             $table->decimal('amount_paid', 20, 0);
+            $table->decimal('balance', 20, 0);
             $table->string('status');
             $table->timestamps();
         });

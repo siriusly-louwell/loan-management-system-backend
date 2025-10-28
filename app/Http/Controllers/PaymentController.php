@@ -77,7 +77,8 @@ class PaymentController extends Controller
         try {
             $validated = $request->validate([
                 'amount_paid' => 'required|numeric',
-                'application_form_id' => 'required|integer'
+                'application_form_id' => 'required|integer',
+                'total_amount' => 'required|numeric'
             ]);
 
             $this->validatePayment($validated['amount_paid'], $request->application_form_id);
@@ -94,23 +95,32 @@ class PaymentController extends Controller
                 ], 404);
 
             $paymentStatus = $this->determinePaymentStatus($schedule->due_date);
+            $previousPayments = Payment::where('application_form_id', $validated['application_form_id'])
+                ->sum('amount_paid');
 
             // ? Handle payment distribution if amount exceeds schedule
             if ($validated['amount_paid'] > $schedule->amount_due) {
+                $runningTotal = $previousPayments;
                 $payments = $this->distributePayment(
                     $validated['application_form_id'],
                     $validated['amount_paid']
                 );
 
                 foreach ($payments as $paymentData) {
+                    $runningTotal += $paymentData['amount_paid'];
+                    $currentBalance = $validated['total_amount'] - $runningTotal;
+
                     Payment::create(array_merge($paymentData, [
                         'status' => $paymentStatus,
                         'cert_num' => $request->cert_num,
-                        'issued_at' => $request->issued_at
+                        'issued_at' => $request->issued_at,
+                        'balance' => $currentBalance
                     ]));
                 }
             } else {
                 // ? Handle single payment
+                $totalPaidAmount = $previousPayments + $validated['amount_paid'];
+                $currentBalance = $validated['total_amount'] - $totalPaidAmount;
                 $totalPreviousPayments = Payment::where('application_form_id', $validated['application_form_id'])
                     ->where('schedule_id', $schedule->id)
                     ->sum('amount_paid');
@@ -121,6 +131,7 @@ class PaymentController extends Controller
                     'cert_num' => $request->cert_num,
                     'issued_at' => $request->issued_at,
                     'amount_paid' => $validated['amount_paid'],
+                    'balance' => $currentBalance,
                     'status' => $paymentStatus
                 ]);
 
