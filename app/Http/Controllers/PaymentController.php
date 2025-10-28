@@ -19,15 +19,11 @@ class PaymentController extends Controller
      */
     public function index(Request $request)
     {
-        // $payments = Payment::with('application')->get();
-        // return response()->json($payments);
-
         $perPage = $request->input('per_page', 10);
         $credits = Payment::with(['application']);
 
         if ($request->has('customer')) {
             $customer = $request->input('customer');
-
             $credits->when($customer, function ($query, $customer) {
                 $query->where('user_id', $customer);
             });
