@@ -212,6 +212,7 @@ class ApplicationFormController extends Controller
 
         $application = ApplicationForm::query()
             ->where($by, $value)
+            ->when($by === 'user_id', fn($q) => $q->with('address'))
             ->when($by === 'id', fn($q) => $q->with(['transactions.motorcycle', 'address', 'ciReport']))
             ->when($stff === 'record_id', fn($q) => $q->with(['transactions.motorcycle']))
             ->orderByDesc('created_at')
