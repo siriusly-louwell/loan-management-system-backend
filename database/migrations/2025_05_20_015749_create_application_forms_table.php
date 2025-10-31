@@ -70,8 +70,8 @@ return new class extends Migration
             $table->text('valid_id');
             $table->text('residence_proof');
             $table->text('income_proof');
-            $table->date('from_sched')->nullable();
-            $table->date('to_sched')->nullable();
+            // $table->date('from_sched')->nullable();
+            // $table->date('to_sched')->nullable();
             $table->string('reject_reason')->nullable();
             $table->timestamps();
         });

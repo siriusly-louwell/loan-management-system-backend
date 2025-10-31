@@ -90,109 +90,21 @@ class ApplicationFormController extends Controller
     {
         $response = DB::transaction(function () use ($request) {
             try {
-                $address = Address::create([
-                    'personal_pres' => $request->personal_pres,
-                    'personal_prev' => $request->personal_prev,
-                    'parent_pres' => $request->parent_pres,
-                    'parent_prev' => $request->parent_prev,
-                    'spouse_pres' => $request->spouse_pres,
-                    'spouse_prev' => $request->spouse_prev,
-                    'employer_address' => $request->employer_address,
-                    'lat' => $request->lat,
-                    'lng' => $request->lng,
-                ]);
-
-                if ($request->hasFile('valid_id')) {
-                    $valid_id = $request->file('valid_id')->store('uploads', 'public');
-                } else {
-                    return response()->json(['error' => 'No file uploaded'], 400);
-                }
-                if ($request->hasFile('id_pic')) {
-                    $id_pic = $request->file('id_pic')->store('uploads', 'public');
-                }
-                if ($request->hasFile('residence_proof')) {
-                    $residence_proof = $request->file('residence_proof')->store('uploads', 'public');
-                }
-                if ($request->hasFile('income_proof')) {
-                    $income_proof = $request->file('income_proof')->store('uploads', 'public');
-                }
-
-                $recordId = '2025-' . strtoupper(Str::random(8));
-                $application = ApplicationForm::create([
-                    'record_id' => $recordId,
-                    'apply_status' => 'pending',
-                    'first_name' => $request->first_name,
-                    'last_name' => $request->last_name,
-                    'middle_name' => $request->middle_name,
-                    'contact_num' => $request->contact_num,
-                    'email' => $request->email,
-                    'address_id' => $address->id,
-                    'gender' => $request->gender,
-                    'status' => $request->status,
-                    'educ_attain' => $request->educ_attain,
-                    'residence' => $request->residence,
-                    'amortization' => $request->amortization,
-                    'rent' => $request->rent,
-                    'sss' => $request->sss,
-                    'tin' => $request->tin,
-                    'birth_day' => $request->birth_day,
-                    'birth_place' => $request->birth_place,
-                    'father_first' => $request->father_first,
-                    'father_middle' => $request->father_middle,
-                    'father_last' => $request->father_last,
-                    'mother_first' => $request->mother_first,
-                    'mother_middle' => $request->mother_middle,
-                    'mother_last' => $request->mother_last,
-                    'comm_standing' => $request->comm_standing,
-                    'home_description' => $request->home_description,
-                    'income' => $request->income,
-                    'superior' => $request->superior,
-                    'employment_status' => $request->employment_status,
-                    'yrs_in_service' => $request->yrs_in_service,
-                    'rate' => $request->rate,
-                    'employer' => $request->employer,
-                    'salary' => $request->salary,
-                    'business' => $request->business,
-                    'living_exp' => $request->living_exp,
-                    'rental_exp' => $request->rental_exp,
-                    'education_exp' => $request->education_exp,
-                    'transportation' => $request->transportation,
-                    'insurance' => $request->insurance,
-                    'bills' => $request->bills,
-                    'spouse_name' => $request->spouse_name,
-                    'b_date' => $request->b_date,
-                    'spouse_work' => $request->spouse_work,
-                    'children_num' => $request->children_num,
-                    'children_dep' => $request->children_dep,
-                    'school' => $request->school,
-                    'valid_id' => $valid_id,
-                    'id_pic' => $id_pic,
-                    'residence_proof' => $residence_proof,
-                    'income_proof' => $income_proof,
-                ]);
-
+                $address = $this->createAddress($request);
+                $files = $this->handleFileUploads($request);
+                $application = $this->createApplication($request, $address->id, $files);
                 $transactionData = json_decode($request->transaction, true);
-                $application->transactions()->create($transactionData);
-                $application->credits()->create([
-                    'user_id' => $request->user_id,
-                    'status' => 'ongoing',
-                    'amount' => $transactionData['price']
-                ]);
+                $this->createRelatedRecords($application, $transactionData);
 
-                $application->notify(new ApplicationSubmitted(
-                    $request->first_name . ' ' . $request->last_name,
-                    $recordId,
-                    $transactionData
-                ));
-
+                // $this->sendApplicationNotification($application, $transactionData);
                 return response()->json([
                     'message' => 'Application was submitted successfully!',
                     'type' => "success",
-                    'record_id' => $recordId,
+                    'record_id' => $application->record_id,
                     'contact' => $request->contact_num
                 ], 201);
             } catch (\Illuminate\Validation\ValidationException $e) {
-                return response()->json(['errors ' => $e->errors()], 422);
+                return response()->json(['errors' => $e->errors()], 422);
             }
         });
 
@@ -300,6 +212,122 @@ class ApplicationFormController extends Controller
     public function destroy(ApplicationForm $application)
     {
         //
+    }
+
+    private function createAddress(Request $request): Address
+    {
+        return Address::create([
+            'personal_pres' => $request->personal_pres,
+            'personal_prev' => $request->personal_prev,
+            'parent_pres' => $request->parent_pres,
+            'parent_prev' => $request->parent_prev,
+            'spouse_pres' => $request->spouse_pres,
+            'spouse_prev' => $request->spouse_prev,
+            'employer_address' => $request->employer_address,
+            'lat' => $request->lat,
+            'lng' => $request->lng,
+        ]);
+    }
+
+    private function handleFileUploads(Request $request): array
+    {
+        if ($request->has('keep_files')) {
+            return [
+                'valid_id' => $request->valid_id,
+                'id_pic' => $request->id_pic,
+                'residence_proof' => $request->residence_proof,
+                'income_proof' => $request->income_proof,
+            ];
+        }
+
+        $files = [];
+        $fileTypes = ['valid_id', 'id_pic', 'residence_proof', 'income_proof'];
+
+        foreach ($fileTypes as $type) {
+            if ($request->hasFile($type))
+                $files[$type] = $request->file($type)->store('uploads', 'public');
+            else throw new \Exception('No valid ID uploaded');
+        }
+
+        return $files;
+    }
+
+    private function createApplication(Request $request, int $addressId, array $files): ApplicationForm
+    {
+        $recordId = '2025-' . strtoupper(Str::random(8));
+
+        return ApplicationForm::create([
+            'record_id' => $recordId,
+            'user_id' => $request->user_id,
+            'apply_status' => 'pending',
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'middle_name' => $request->middle_name,
+            'contact_num' => $request->contact_num,
+            'email' => $request->email,
+            'address_id' => $addressId,
+            'gender' => $request->gender,
+            'status' => $request->status,
+            'educ_attain' => $request->educ_attain,
+            'residence' => $request->residence,
+            'amortization' => $request->amortization,
+            'rent' => $request->rent,
+            'sss' => $request->sss,
+            'tin' => $request->tin,
+            'birth_day' => $request->birth_day,
+            'birth_place' => $request->birth_place,
+            'father_first' => $request->father_first,
+            'father_middle' => $request->father_middle,
+            'father_last' => $request->father_last,
+            'mother_first' => $request->mother_first,
+            'mother_middle' => $request->mother_middle,
+            'mother_last' => $request->mother_last,
+            'comm_standing' => $request->comm_standing,
+            'home_description' => $request->home_description,
+            'income' => $request->income,
+            'superior' => $request->superior,
+            'employment_status' => $request->employment_status,
+            'yrs_in_service' => $request->yrs_in_service,
+            'rate' => $request->rate,
+            'employer' => $request->employer,
+            'salary' => $request->salary,
+            'business' => $request->business,
+            'living_exp' => $request->living_exp,
+            'rental_exp' => $request->rental_exp,
+            'education_exp' => $request->education_exp,
+            'transportation' => $request->transportation,
+            'insurance' => $request->insurance,
+            'bills' => $request->bills,
+            'spouse_name' => $request->spouse_name,
+            'b_date' => $request->b_date,
+            'spouse_work' => $request->spouse_work,
+            'children_num' => $request->children_num,
+            'children_dep' => $request->children_dep,
+            'school' => $request->school,
+            'valid_id' => $files['valid_id'],
+            'id_pic' => $files['id_pic'] ?? null,
+            'residence_proof' => $files['residence_proof'] ?? null,
+            'income_proof' => $files['income_proof'] ?? null,
+        ]);
+    }
+
+    private function createRelatedRecords(ApplicationForm $application, array $transactionData): void
+    {
+        $application->transactions()->create($transactionData);
+        $application->credits()->create([
+            'user_id' => $application->user_id,
+            'status' => 'ongoing',
+            'amount' => $transactionData['price']
+        ]);
+    }
+
+    private function sendApplicationNotification(ApplicationForm $application, array $transactionData): void
+    {
+        $application->notify(new ApplicationSubmitted(
+            $application->first_name . ' ' . $application->last_name,
+            $application->record_id,
+            $transactionData
+        ));
     }
 
     public function count(Request $request)
