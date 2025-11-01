@@ -20,11 +20,11 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
-        $credits = Payment::with(['application']);
+        $payments = Payment::with('application');
 
-        if ($request->has('customer')) {
+        if ($request->has('customer') && $request->boolean('customer')) {
             $customer = $request->input('customer');
-            $credits->when($customer, function ($query, $customer) {
+            $payments->when($customer, function ($query, $customer) {
                 $query->where('user_id', $customer);
             });
         }
@@ -32,7 +32,7 @@ class PaymentController extends Controller
         // if ($request->has('search')) {
         //     $search = $request->input('search');
 
-        //     $credits->when($search, function ($query, $search) {
+        //     $payments->when($search, function ($query, $search) {
         //         $query->where(function ($q) use ($search) {
         //             $q->where('status', 'like', "%{$search}%")
         //                 ->orWhere('amount', 'like', "%{$search}%");
@@ -45,11 +45,11 @@ class PaymentController extends Controller
             $max = $request->input('max');
             $type = $request->input('type');
 
-            $credits->when($min, fn($q) => $q->where($type, '>=', $min))
+            $payments->when($min, fn($q) => $q->where($type, '>=', $min))
                 ->when($max, fn($q) => $q->where($type, '<=', $max));
         }
 
-        return response()->json($credits->orderBy('created_at', 'desc')->paginate($perPage));
+        return response()->json($payments->orderBy('created_at', 'desc')->paginate($perPage));
     }
 
     /**
@@ -74,6 +74,7 @@ class PaymentController extends Controller
             $validated = $request->validate([
                 'amount_paid' => 'required|numeric',
                 'application_form_id' => 'required|integer',
+                'user_id' => 'required|integer',
                 'total_amount' => 'required|numeric'
             ]);
 
@@ -93,48 +94,27 @@ class PaymentController extends Controller
             $paymentStatus = $this->determinePaymentStatus($schedule->due_date);
             $previousPayments = Payment::where('application_form_id', $validated['application_form_id'])
                 ->sum('amount_paid');
+                
+            $totalPaidAmount = $previousPayments + $validated['amount_paid'];
+            $currentBalance = $validated['total_amount'] - $totalPaidAmount;
+            $totalPreviousPayments = Payment::where('application_form_id', $validated['application_form_id'])
+                ->where('schedule_id', $schedule->id)
+                ->sum('amount_paid');
 
-            // ? Handle payment distribution if amount exceeds schedule
-            if ($validated['amount_paid'] > $schedule->amount_due) {
-                $runningTotal = $previousPayments;
-                $payments = $this->distributePayment(
-                    $validated['application_form_id'],
-                    $validated['amount_paid']
-                );
+            Payment::create([
+                'application_form_id' => $validated['application_form_id'],
+                'user_id' => $validated['user_id'],
+                'schedule_id' => $schedule->id,
+                'cert_num' => $request->cert_num,
+                'issued_at' => $request->issued_at,
+                'amount_paid' => $validated['amount_paid'],
+                'balance' => $currentBalance,
+                'status' => $paymentStatus
+            ]);
 
-                foreach ($payments as $paymentData) {
-                    $runningTotal += $paymentData['amount_paid'];
-                    $currentBalance = $validated['total_amount'] - $runningTotal;
-
-                    Payment::create(array_merge($paymentData, [
-                        'status' => $paymentStatus,
-                        'cert_num' => $request->cert_num,
-                        'issued_at' => $request->issued_at,
-                        'balance' => $currentBalance
-                    ]));
-                }
-            } else {
-                // ? Handle single payment
-                $totalPaidAmount = $previousPayments + $validated['amount_paid'];
-                $currentBalance = $validated['total_amount'] - $totalPaidAmount;
-                $totalPreviousPayments = Payment::where('application_form_id', $validated['application_form_id'])
-                    ->where('schedule_id', $schedule->id)
-                    ->sum('amount_paid');
-
-                Payment::create([
-                    'application_form_id' => $validated['application_form_id'],
-                    'schedule_id' => $schedule->id,
-                    'cert_num' => $request->cert_num,
-                    'issued_at' => $request->issued_at,
-                    'amount_paid' => $validated['amount_paid'],
-                    'balance' => $currentBalance,
-                    'status' => $paymentStatus
-                ]);
-
-                if (($totalPreviousPayments + $validated['amount_paid']) >= $schedule->amount_due) {
-                    $schedule->status = 'paid';
-                    $schedule->save();
-                }
+            if (($totalPreviousPayments + $validated['amount_paid']) >= $schedule->amount_due) {
+                $schedule->status = 'paid';
+                $schedule->save();
             }
 
             $this->updateApplicationStatus($validated['application_form_id']);
@@ -295,20 +275,19 @@ class PaymentController extends Controller
 
     private function validatePayment($amount, $applicationId)
     {
-        // Check if amount is positive
         if ($amount <= 0) {
             throw new \Exception('Payment amount must be positive');
         }
 
         // Check if total payments don't exceed total loan amount
-        $totalLoanAmount = Schedule::where('application_form_id', $applicationId)
-            ->sum('amount_due');
-        $totalPaid = Payment::where('application_form_id', $applicationId)
-            ->sum('amount_paid');
+        // $totalLoanAmount = Schedule::where('application_form_id', $applicationId)
+        //     ->sum('amount_due');
+        // $totalPaid = Payment::where('application_form_id', $applicationId)
+        //     ->sum('amount_paid');
 
-        if (($totalPaid + $amount) > $totalLoanAmount) {
-            throw new \Exception('Payment exceeds total loan amount');
-        }
+        // if (($totalPaid + $amount) > $totalLoanAmount) {
+        //     throw new \Exception('Payment exceeds total loan amount');
+        // }
     }
 
     private function determinePaymentStatus($dueDate, $gracePeriodDays = 3)
