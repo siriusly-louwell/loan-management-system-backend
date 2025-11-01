@@ -93,8 +93,14 @@ class ApplicationFormController extends Controller
                 $address = $this->createAddress($request);
                 $files = $this->handleFileUploads($request);
                 $application = $this->createApplication($request, $address->id, $files);
-                $transactionData = json_decode($request->transaction, true);
-                $this->createRelatedRecords($application, $transactionData);
+                $transactions = json_decode($request->transaction, true);
+                $comaker = json_decode($request->comaker, true);
+
+                $comaker['co_sketch'] = $files['co_sketch'];
+                $comaker['co_valid_id'] = $files['co_valid_id'];
+                $comaker['co_id_pic'] = $files['co_id_pic'];
+                $comaker['co_residence_proof'] = $files['co_residence_proof'];
+                $this->createRelatedRecords($application, $transactions, $comaker);
 
                 // $this->sendApplicationNotification($application, $transactionData);
                 return response()->json([
@@ -237,16 +243,33 @@ class ApplicationFormController extends Controller
                 'id_pic' => $request->id_pic,
                 'residence_proof' => $request->residence_proof,
                 'income_proof' => $request->income_proof,
+                'co_sketch' => $request->hasFile('co_sketch')
+                    ? $files['co_sketch'] = $request->file('co_sketch')->store('uploads', 'public') : null,
+                'co_valid_id' => $request->hasFile('co_valid_id')
+                    ? $files['co_valid_id'] = $request->file('co_valid_id')->store('uploads', 'public') : null,
+                'co_id_pic' => $request->hasFile('co_id_pic')
+                    ? $files['co_id_pic'] = $request->file('co_id_pic')->store('uploads', 'public') : null,
+                'co_residence_proof' => $request->hasFile('co_residence_proof')
+                    ? $files['co_residence_proof'] = $request->file('co_residence_proof')->store('uploads', 'public') : null
             ];
         }
 
         $files = [];
-        $fileTypes = ['valid_id', 'id_pic', 'residence_proof', 'income_proof'];
+        $fileTypes = [
+            'valid_id',
+            'id_pic',
+            'residence_proof',
+            'income_proof',
+            'cosketch',
+            'co_valid_id',
+            'co_id_pic',
+            'co_residence_proof',
+        ];
 
         foreach ($fileTypes as $type) {
             if ($request->hasFile($type))
                 $files[$type] = $request->file($type)->store('uploads', 'public');
-            else throw new \Exception('No valid ID uploaded');
+            else throw new \Exception('No ' . $type . ' uploaded');
         }
 
         return $files;
@@ -311,13 +334,14 @@ class ApplicationFormController extends Controller
         ]);
     }
 
-    private function createRelatedRecords(ApplicationForm $application, array $transactionData): void
+    private function createRelatedRecords(ApplicationForm $application, array $transactions, array $comaker): void
     {
-        $application->transactions()->create($transactionData);
+        $application->transactions()->create($transactions);
+        $application->comaker()->create($comaker);
         $application->credits()->create([
             'user_id' => $application->user_id,
             'status' => 'ongoing',
-            'amount' => $transactionData['price']
+            'amount' => $transactions['price']
         ]);
     }
 

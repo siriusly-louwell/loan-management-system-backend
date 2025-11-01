@@ -49,6 +49,10 @@ return new class extends Migration
             $table->string('sp_mother_first', 30)->nullable();
             $table->string('sp_mother_middle', 20)->nullable();
             $table->string('sp_mother_last', 30)->nullable();
+            $table->text('co_sketch')->nullable();
+            $table->text('co_valid_id')->nullable();
+            $table->text('co_id_pic')->nullable();
+            $table->text('co_residence_proof')->nullable();
             $table->timestamps();
         });
     }
