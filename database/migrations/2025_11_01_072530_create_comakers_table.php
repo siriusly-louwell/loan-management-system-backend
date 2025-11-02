@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('status')->nullable();
             $table->string('religion')->nullable();
             $table->string('tribe')->nullable();
-            $table->string('educ_attain');
+            $table->string('educ_attain')->nullable();
             $table->string('citizenship')->nullable();
             $table->string('occupation')->nullable();
             $table->integer('yrs_in_service')->nullable();

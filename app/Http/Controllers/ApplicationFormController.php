@@ -237,43 +237,82 @@ class ApplicationFormController extends Controller
 
     private function handleFileUploads(Request $request): array
     {
-        if ($request->has('keep_files')) {
-            return [
-                'valid_id' => $request->valid_id,
-                'id_pic' => $request->id_pic,
-                'residence_proof' => $request->residence_proof,
-                'income_proof' => $request->income_proof,
-                'co_sketch' => $request->hasFile('co_sketch')
-                    ? $files['co_sketch'] = $request->file('co_sketch')->store('uploads', 'public') : null,
-                'co_valid_id' => $request->hasFile('co_valid_id')
-                    ? $files['co_valid_id'] = $request->file('co_valid_id')->store('uploads', 'public') : null,
-                'co_id_pic' => $request->hasFile('co_id_pic')
-                    ? $files['co_id_pic'] = $request->file('co_id_pic')->store('uploads', 'public') : null,
-                'co_residence_proof' => $request->hasFile('co_residence_proof')
-                    ? $files['co_residence_proof'] = $request->file('co_residence_proof')->store('uploads', 'public') : null
-            ];
-        }
-
-        $files = [];
-        $fileTypes = [
+        $fileKeys = [
             'valid_id',
             'id_pic',
             'residence_proof',
             'income_proof',
-            'cosketch',
+            'co_sketch',
             'co_valid_id',
             'co_id_pic',
             'co_residence_proof',
         ];
 
-        foreach ($fileTypes as $type) {
-            if ($request->hasFile($type))
-                $files[$type] = $request->file($type)->store('uploads', 'public');
-            else throw new \Exception('No ' . $type . ' uploaded');
+        $files = [];
+
+        // When user wants to keep existing files
+        if ($request->boolean('keep_files')) {
+            foreach ($fileKeys as $key) {
+                $files[$key] = Str::contains($key, 'co_')
+                    ? $request->file($key)->store('uploads', 'public')
+                    : $request->$key;
+            }
+
+            return $files;
+        }
+
+        // When new uploads are required
+        foreach ($fileKeys as $key) {
+            if (!$request->hasFile($key)) {
+                throw new \Exception("No file uploaded for: {$key}");
+            }
+
+            $files[$key] = $request->file($key)->store('uploads', 'public');
         }
 
         return $files;
     }
+
+
+    // private function handleFileUploads(Request $request): array
+    // {
+    //     if ($request->has('keep_files')) {
+    //         return [
+    //             'valid_id' => $request->valid_id,
+    //             'id_pic' => $request->id_pic,
+    //             'residence_proof' => $request->residence_proof,
+    //             'income_proof' => $request->income_proof,
+    //             'co_sketch' => $request->hasFile('co_sketch')
+    //                 ? $files['co_sketch'] = $request->file('co_sketch')->store('uploads', 'public') : null,
+    //             'co_valid_id' => $request->hasFile('co_valid_id')
+    //                 ? $files['co_valid_id'] = $request->file('co_valid_id')->store('uploads', 'public') : null,
+    //             'co_id_pic' => $request->hasFile('co_id_pic')
+    //                 ? $files['co_id_pic'] = $request->file('co_id_pic')->store('uploads', 'public') : null,
+    //             'co_residence_proof' => $request->hasFile('co_residence_proof')
+    //                 ? $files['co_residence_proof'] = $request->file('co_residence_proof')->store('uploads', 'public') : null
+    //         ];
+    //     }
+
+    //     $files = [];
+    //     $fileTypes = [
+    //         'valid_id',
+    //         'id_pic',
+    //         'residence_proof',
+    //         'income_proof',
+    //         'co_sketch',
+    //         'co_valid_id',
+    //         'co_id_pic',
+    //         'co_residence_proof',
+    //     ];
+
+    //     foreach ($fileTypes as $type) {
+    //         if ($request->hasFile($type))
+    //             $files[$type] = $request->file($type)->store('uploads', 'public');
+    //         else throw new \Exception('No ' . $type . ' uploaded');
+    //     }
+
+    //     return $files;
+    // }
 
     private function createApplication(Request $request, int $addressId, array $files): ApplicationForm
     {
