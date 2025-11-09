@@ -102,7 +102,7 @@ class ApplicationFormController extends Controller
                 $comaker['co_residence_proof'] = $files['co_residence_proof'];
                 $this->createRelatedRecords($application, $transactions, $comaker);
 
-                // $this->sendApplicationNotification($application, $transactionData);
+                $this->sendApplicationNotification($application, $transactions);
                 return response()->json([
                     'message' => 'Application was submitted successfully!',
                     'type' => "success",

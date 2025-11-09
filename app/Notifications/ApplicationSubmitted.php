@@ -54,8 +54,8 @@ class ApplicationSubmitted extends Notification
         $transaction = $this->transaction;
         // $motorcycle = Motorcycle::where('id', $transaction['motorcycle_id'])->firstOrFail();
 
-        $response = $this->toSMS($notifiable->contact);
-        Log::info($response);
+        // $response = $this->toSMS($notifiable->contact);
+        // Log::info($response);
         return (new MailMessage)
             ->subject('Your Loan Application Has Been Received')
             ->greeting('Hello ' . $this->applicantName . ',')
