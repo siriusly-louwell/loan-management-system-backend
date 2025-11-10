@@ -133,6 +133,16 @@ class ApplicationFormController extends Controller
             ->when($by === 'user_id', fn($q) => $q->with('address'))
             ->when($by === 'id', fn($q) => $q->with(['transactions.motorcycle', 'address', 'ciReport']))
             ->when($stff === 'record_id', fn($q) => $q->with(['transactions.motorcycle']))
+            // ->when($stff, function ($query, $id) {
+            //     $query->where(function ($q) use ($id) {
+            //         $q->where('first_name', 'like', "%{$id}%")
+            //             ->orWhere('middle_name', 'like', "%{$id}%")
+            //             ->orWhere('last_name', 'like', "%{$id}%")
+            //             ->orWhere('record_id', 'like', "%{$id}%")
+            //             ->orWhere('email', 'like', "%{$id}%");
+            //         $q->with(['transactions.motorcycle']);
+            //     });
+            // })
             ->orderByDesc('created_at')
             ->first();
 
