@@ -21,9 +21,9 @@ class PaymentController extends Controller
     {
         $perPage = $request->input('per_page', 10);
         $payments = Payment::with('application');
+        $customer = $request->input('customer');
 
-        if ($request->has('customer') && $request->input('customer') !== 'false') {
-            $customer = $request->input('customer');
+        if ($request->has('customer') && $customer != 'false') {
             $payments->when($customer, function ($query, $customer) {
                 $query->where('user_id', $customer);
             });
