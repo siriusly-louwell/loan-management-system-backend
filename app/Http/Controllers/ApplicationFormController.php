@@ -102,7 +102,7 @@ class ApplicationFormController extends Controller
                 $comaker['co_residence_proof'] = $files['co_residence_proof'];
                 $this->createRelatedRecords($application, $transactions, $comaker);
 
-                $this->sendApplicationNotification($application, $transactions);
+                // $this->sendApplicationNotification($ application, $transactions);
                 return response()->json([
                     'message' => 'Application was submitted successfully!',
                     'type' => "success",
@@ -257,6 +257,12 @@ class ApplicationFormController extends Controller
             'co_id_pic',
             'co_residence_proof',
         ];
+        // $optionalCoKeys = [
+        //     'co_sketch',
+        //     'co_valid_id',
+        //     'co_id_pic',
+        //     'co_residence_proof',
+        // ];
 
         $files = [];
 
@@ -274,7 +280,10 @@ class ApplicationFormController extends Controller
         // When new uploads are required
         foreach ($fileKeys as $key) {
             if (!$request->hasFile($key)) {
-                throw new \Exception("No file uploaded for: {$key}");
+                if (Str::contains($key, 'co_')) {
+                    $files[$key] = null;
+                    continue;
+                } else throw new \Exception("No file uploaded for: {$key}");
             }
 
             $files[$key] = $request->file($key)->store('uploads', 'public');
