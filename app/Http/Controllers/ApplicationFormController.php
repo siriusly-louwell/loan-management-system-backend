@@ -102,7 +102,7 @@ class ApplicationFormController extends Controller
                 $comaker['co_residence_proof'] = $files['co_residence_proof'];
                 $this->createRelatedRecords($application, $transactions, $comaker);
 
-                // $this->sendApplicationNotification($ application, $transactions);
+                $this->sendApplicationNotification($application, $transactions);
                 return response()->json([
                     'message' => 'Application was submitted successfully!',
                     'type' => "success",
@@ -204,6 +204,7 @@ class ApplicationFormController extends Controller
                 'status' => $request->apply_status,
                 'recordID' => $application->record_id,
                 'type' => $request->type,
+                'contact' => $application->contact_num,
                 'message' => $request->message,
                 'resubmit' => $request->resubmit,
                 'schedule' => $request->schedule,
@@ -257,12 +258,6 @@ class ApplicationFormController extends Controller
             'co_id_pic',
             'co_residence_proof',
         ];
-        // $optionalCoKeys = [
-        //     'co_sketch',
-        //     'co_valid_id',
-        //     'co_id_pic',
-        //     'co_residence_proof',
-        // ];
 
         $files = [];
 
@@ -366,6 +361,7 @@ class ApplicationFormController extends Controller
     {
         $application->notify(new ApplicationSubmitted(
             $application->first_name . ' ' . $application->last_name,
+            $application->contact_num,
             $application->record_id,
             $transactionData
         ));

@@ -10,7 +10,7 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class PaymentReminder extends Notification
+class PaymentReminder extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -62,7 +62,7 @@ class PaymentReminder extends Notification
             'apikey' => 'd6c11eecdd39bbf6780e0bcd8f26722c',
             'number' => $contact,
             'message' => $message,
-            'sendername' => 'Rhean Motor Center Inc.',
+            'sendername' => 'RheanMotor',
         ]);
     }
 

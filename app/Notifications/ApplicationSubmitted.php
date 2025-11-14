@@ -10,7 +10,7 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class ApplicationSubmitted extends Notification
+class ApplicationSubmitted extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -18,15 +18,17 @@ class ApplicationSubmitted extends Notification
     protected $recordID;
     protected $transaction;
     private $motorcycle;
+    private $contact;
 
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct($applicantName, $recordId, $transaction)
+    public function __construct($applicantName, $contact_num, $recordId, $transaction)
     {
         $this->applicantName = $applicantName;
+        $this->contact = $contact_num;
         $this->recordID = $recordId;
         $this->transaction = $transaction;
         $this->motorcycle = Motorcycle::where('id', $transaction['motorcycle_id'])->firstOrFail();
@@ -51,11 +53,7 @@ class ApplicationSubmitted extends Notification
      */
     public function toMail($notifiable)
     {
-        $transaction = $this->transaction;
-        // $motorcycle = Motorcycle::where('id', $transaction['motorcycle_id'])->firstOrFail();
-
-        $response = $this->toSMS($notifiable->contact);
-        // Log::info($response);
+        $this->toSMS($this->contact);
         return (new MailMessage)
             ->subject('Your Loan Application Has Been Received')
             ->greeting('Hello ' . $this->applicantName . ',')
@@ -70,7 +68,7 @@ class ApplicationSubmitted extends Notification
             ->line('**Tenure:** `' . $this->transaction['tenure'] . '` year/s')
             ->line('You can track the status of your application anytime by visiting our website and entering your record ID below.')
             ->line('**Record ID:** `' . $this->recordID . '`')
-            ->action('Find My Application', url('http://localhost:3000/find'))
+            ->action('Find My Application', url('https://rhean-loan-management-system.xyz/find'))
             ->line('If you have any questions, feel free to reach out to us. We’ll be glad to assist you.')
             ->salutation('Warm regards, **Rhean Motor Center Inc.**');
     }
@@ -78,7 +76,7 @@ class ApplicationSubmitted extends Notification
     /**
      * Send SMS
      */
-    public function toSms($contact)
+    public function toSMS($contact)
     {
         $message =
             "Rhean Motor Center: Your loan application (Record ID: {$this->recordID}) has been received.\n" .
@@ -86,14 +84,14 @@ class ApplicationSubmitted extends Notification
             "Down Payment: ₱{$this->transaction['downpayment']}\n" .
             "Color: {$this->transaction['color']}\n" .
             "Tenure: {$this->transaction['tenure']} year/s\n" .
-            "Track status: http://localhost:3000/find";
+            "Track status: https://rhean-loan-management-system.xyz/find";
 
         Http::post('https://api.semaphore.co/api/v4/messages', [
             'apikey' => 'd6c11eecdd39bbf6780e0bcd8f26722c',
             // 'apikey' => env('SEMAPHORE_API_KEY'),
             'number' => $contact,
             'message' => $message,
-            'sendername' => 'Rhean Motor Center Inc.',
+            'sendername' => 'RheanMotor',
         ]);
     }
 
