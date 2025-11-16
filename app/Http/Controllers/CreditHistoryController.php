@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CreditHistory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CreditHistoryController extends Controller
 {
