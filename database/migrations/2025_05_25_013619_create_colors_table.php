@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('motorcycle_id');
             $table->foreign('motorcycle_id')->references('id')->on('motorcycles');
-            $table->string('color');
+            $table->string('hex_value');
             $table->integer(('quantity'))->nullable();
             $table->timestamps();
         });
