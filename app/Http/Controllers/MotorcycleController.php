@@ -102,7 +102,6 @@ class MotorcycleController extends Controller
     public function store(Request $request)
     {
         $images = [];
-        $angles = [];
 
         try {
             $validated = $request->validate([
@@ -111,36 +110,29 @@ class MotorcycleController extends Controller
                 'unit_type' => 'required|string',
                 'description' => 'required|string',
                 'price' => 'required|numeric',
-                'quantity' => 'required|array',
-                'quantity.*' => 'required|integer',
-                'totalQuantity' => 'required|integer',
                 'interest' => 'required|integer',
                 'tenure' => 'required|integer',
                 'rebate' => 'required|numeric',
                 'downpayment' => 'required|numeric',
-                'files' => 'required|array',
-                'files.*' => 'required|file|mimes:jpg,jpeg,png',
                 'colors' => 'required|array',
-                'colors.*' => 'required|string',
+                'colors.*.hex_value' => 'required|string',
+                'colors.*.quantity' => 'required|integer',
+                'colors.*.images' => 'array',
+                'colors.*.images.*' => 'file|mimes:jpg,jpeg,png',
             ]);
-
-            foreach ($request->file('files') as $file) {
-                $path = $file->store('uploads', 'public');
-                $images[] = $path;
+            $totalQuantity = 1;
+            foreach ($validated["colors"] as $colorGroup) {
+                $totalQuantity += $colorGroup["quantity"];
             }
-
-            foreach ($request->file('angles') as $file) {
-                $path = $file->store('uploads', 'public');
-                $angles[] = $path;
-            }
-
+            $path = $validated["colors"][0]["images"][0]->store('uploads', 'public');
+            $images[] = $path;
             $motor = Motorcycle::create([
                 'name' => $validated['name'],
                 'brand' => $validated['brand'],
                 'unit_type' => $validated['unit_type'],
                 'price' => $validated['price'],
                 'description' => $validated['description'],
-                'quantity' => $validated['totalQuantity'],
+                'quantity' => $totalQuantity,
                 'rebate' => $validated['rebate'],
                 'tenure' => $validated['tenure'],
                 'interest' => $validated['interest'],
@@ -178,16 +170,27 @@ class MotorcycleController extends Controller
                 'cruise' => $request->cruise,
             ]);
 
-            foreach ($validated['colors'] as $key =>  $color) {
-                $motor->colors()->create(['color' => $color, 'quantity' => $request->quantity[$key]]);
-            }
+            foreach ($request->colors as $index => $colorGroup) {
+                // Save each color entry
+                $color = $motor->colors()->create([
+                    "motorcycle_id" => $motor->id,
+                    'hex_value' => $colorGroup['hex_value'],
+                    'quantity' => $colorGroup['quantity'],
+                ]);
 
-            foreach ($images as $path) {
-                $motor->images()->create(['path' => $path, 'image_type' => 'color']);
-            }
+                // Save per-color images
+                if ($request->hasFile("colors.$index.images")) {
+                    foreach ($request->file("colors.$index.images") as $image) {
+                        $path = $image->store('uploads', 'public');
 
-            foreach ($angles as $path) {
-                $motor->images()->create(['path' => $path, 'image_type' => 'angle']);
+                        $motor->images()->create([
+                            'path' => $path,
+                            'image_type' => 'color',
+                            'motorcycle_id' => $motor->id, // if you want to associate images per color
+                            "color_id" => $color->id
+                        ]);
+                    }
+                }
             }
 
             return response()->json([
@@ -211,7 +214,7 @@ class MotorcycleController extends Controller
      */
     public function show(Motorcycle $motorcycle)
     {
-        $motorcycle->load(['colors', 'images']);
+        $motorcycle->load(['colors.images']);
         return response()->json($motorcycle);
     }
 
