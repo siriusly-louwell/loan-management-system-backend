@@ -25,10 +25,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Route::post('/createmotor', function (Request $request) {
-//     return response()->json(['message' => 'Success']);
-// });
-
 // ? Motorcycle Routes
 Route::get('/motorcycle/count', [MotorcycleController::class, 'count']);
 Route::patch('/motorcycle/{motorcycle}', [MotorcycleController::class, 'update']);

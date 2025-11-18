@@ -175,19 +175,17 @@ class UserController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\User  $user
+     * @param  \App\Models\User  $account
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $account)
     {
         try {
             $updateType = $request->input('type');
 
-            Log::info($request->input('current_password'));
-
             if ($updateType === 'password')
-                return $this->updatePassword($request, $user);
-            else return $this->updateUserDetails($request, $user);
+                return $this->updatePassword($request, $account);
+            else return $this->updateUserDetails($request, $account);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
@@ -199,10 +197,10 @@ class UserController extends Controller
      * Update user password
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\User  $user
+     * @param  \App\Models\User  $account
      * @return \Illuminate\Http\Response
      */
-    private function updatePassword(Request $request, User $user)
+    private function updatePassword(Request $request, User $account)
     {
         $validatedData = $request->validate([
             'current_password' => 'required|string',
@@ -210,7 +208,7 @@ class UserController extends Controller
         ]);
 
         // Verify current password is correct
-        if (!Hash::check($validatedData['current_password'], $user->password)) {
+        if (!Hash::check($validatedData['current_password'], $account->password)) {
             return response()->json([
                 'message' => 'Current password is incorrect',
                 'type' => 'error'
@@ -218,14 +216,14 @@ class UserController extends Controller
         }
 
         // Update password
-        $user->update([
+        $account->update([
             'password' => Hash::make($validatedData['new_password'])
         ]);
 
         return response()->json([
             'message' => 'Password updated successfully',
             'type' => 'success',
-            'data' => $user
+            'data' => $account
         ]);
     }
 
@@ -233,16 +231,16 @@ class UserController extends Controller
      * Update user details (name, email, contact, gender, etc.)
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\User  $user
+     * @param  \App\Models\User  $account
      * @return \Illuminate\Http\Response
      */
-    private function updateUserDetails(Request $request, User $user)
+    private function updateUserDetails(Request $request, User $account)
     {
         $validatedData = $request->validate([
             'first_name' => 'sometimes|string',
             'middle_name' => 'sometimes|string|nullable',
             'last_name' => 'sometimes|string',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'email' => 'sometimes|email|unique:users,email,' . $account->id,
             'contact' => 'sometimes|string|nullable',
             'gender' => 'sometimes|string',
             'status' => 'sometimes|string',
@@ -252,17 +250,17 @@ class UserController extends Controller
         // Handle profile picture upload if provided
         if ($request->hasFile('pfp')) {
             // Optionally delete old profile picture if exists
-            // Storage::delete($user->pfp);
+            // Storage::delete($account->pfp);
             $validatedData['pfp'] = $request->file('pfp')->store('uploads', 'public');
         }
 
         // Update only provided fields
-        $user->update($validatedData);
+        $account->update($validatedData);
 
         return response()->json([
             'message' => 'User details updated successfully',
             'type' => 'success',
-            'data' => $user
+            'data' => $account
         ]);
     }
 
