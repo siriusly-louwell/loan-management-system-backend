@@ -175,28 +175,93 @@ class UserController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\User  $user
+     * @param  \App\Models\User  $account
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $account)
     {
         try {
-            $validatedData = $request->validate([
-                'name' => 'sometimes|string',
-                'brand' => 'sometimes|string',
-                'color' => 'sometimes|string',
-                'description' => 'sometimes|string',
-                'price' => 'sometimes|numeric',
-                'quantity' => 'sometimes|integer',
-                'file_path' => 'sometimes|string'
-            ]);
+            $updateType = $request->input('type');
 
-            // $motorcycle->update($validatedData);
-
-            return response()->json(['message' => 'Product was created successfully!'], 201);
+            if ($updateType === 'password')
+                return $this->updatePassword($request, $account);
+            else return $this->updateUserDetails($request, $account);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['errors ' => $e->errors()], 422);
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
         }
+    }
+
+    /**
+     * Update user password
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\User  $account
+     * @return \Illuminate\Http\Response
+     */
+    private function updatePassword(Request $request, User $account)
+    {
+        $validatedData = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        // Verify current password is correct
+        if (!Hash::check($validatedData['current_password'], $account->password)) {
+            return response()->json([
+                'message' => 'Current password is incorrect',
+                'type' => 'error'
+            ]);
+        }
+
+        // Update password
+        $account->update([
+            'password' => Hash::make($validatedData['new_password'])
+        ]);
+
+        return response()->json([
+            'message' => 'Password updated successfully',
+            'type' => 'success',
+            'data' => $account
+        ]);
+    }
+
+    /**
+     * Update user details (name, email, contact, gender, etc.)
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\User  $account
+     * @return \Illuminate\Http\Response
+     */
+    private function updateUserDetails(Request $request, User $account)
+    {
+        $validatedData = $request->validate([
+            'first_name' => 'sometimes|string',
+            'middle_name' => 'sometimes|string|nullable',
+            'last_name' => 'sometimes|string',
+            'email' => 'sometimes|email|unique:users,email,' . $account->id,
+            'contact' => 'sometimes|string|nullable',
+            'gender' => 'sometimes|string',
+            'status' => 'sometimes|string',
+            'pfp' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Handle profile picture upload if provided
+        if ($request->hasFile('pfp')) {
+            // Optionally delete old profile picture if exists
+            // Storage::delete($account->pfp);
+            $validatedData['pfp'] = $request->file('pfp')->store('uploads', 'public');
+        }
+
+        // Update only provided fields
+        $account->update($validatedData);
+
+        return response()->json([
+            'message' => 'User details updated successfully',
+            'type' => 'success',
+            'data' => $account
+        ]);
     }
 
     /**
