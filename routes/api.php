@@ -25,22 +25,68 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// ? Motorcycle Routes
-Route::get('/motorcycle/count', [MotorcycleController::class, 'count']);
-Route::patch('/motorcycle/{motorcycle}', [MotorcycleController::class, 'update']);
-Route::get('/motorcycle/count', [MotorcycleController::class, 'count']);
+
+/*
+|--------------------------------------------------------------------------
+| MOTORCYCLE ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::prefix('motorcycle')->group(function () {
+    Route::get('/count', [MotorcycleController::class, 'count']);
+});
+
 Route::resource('motorcycle', MotorcycleController::class);
 
-// ? Account Routes
+
+/*
+|--------------------------------------------------------------------------
+| ACCOUNT ROUTES
+|--------------------------------------------------------------------------
+*/
 Route::resource('account', UserController::class);
-// Route::middleware('auth:sanctum')->get('/account', [UserController::class, 'account']);
+
 Route::post('/login', [LoginController::class, 'login']);
 
-// ? Application Routes
-Route::get('/application/count', [ApplicationFormController::class, 'count']);
-Route::get('/payment/count', [PaymentController::class, 'count']);
-Route::get('/credit/score', [CreditHistoryController::class, 'score']);
+
+/*
+|--------------------------------------------------------------------------
+| APPLICATION ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::prefix('application')->group(function () {
+    Route::get('/count', [ApplicationFormController::class, 'count']);
+});
+
 Route::resource('application', ApplicationFormController::class);
-Route::resource('report', CiReportController::class);
+
+
+/*
+|--------------------------------------------------------------------------
+| PAYMENT ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::prefix('payment')->group(function () {
+    Route::get('/count', [PaymentController::class, 'count']);
+});
+
 Route::resource('payment', PaymentController::class);
+
+
+/*
+|--------------------------------------------------------------------------
+| CREDIT ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::prefix('credit')->group(function () {
+    Route::get('/score', [CreditHistoryController::class, 'score']);
+});
+
 Route::resource('credit', CreditHistoryController::class);
+
+
+/*
+|--------------------------------------------------------------------------
+| CI REPORT ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::resource('report', CiReportController::class);
