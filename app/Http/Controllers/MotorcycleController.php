@@ -238,115 +238,145 @@ class MotorcycleController extends Controller
      */
     public function update(Request $request, Motorcycle $motorcycle)
     {
+        Log::info("UPDATE REQUEST RECEIVED", [
+            'request_all' => $request->all()
+        ]);
+
         try {
-            $validatedData = $request->validate([
-                'name' => 'sometimes|string',
-                'brand' => 'sometimes|string',
-                'unit_type' => 'sometimes|string',
-                'color' => 'sometimes|string',
-                'description' => 'sometimes|string',
-                'price' => 'sometimes|numeric',
-                'quantity' => 'sometimes|integer',
-                'totalQuantity' => 'sometimes|array',
-                'totalQuantity.*' => 'sometimes|integer',
-                'rebate' => 'sometimes|numeric',
-                'downpayment' => 'sometimes|numeric',
-                'interest' => 'sometimes|integer',
-                'tenure' => 'sometimes|integer',
-                'file_path' => 'sometimes|string',
-                'engine' => 'sometimes|string',
-                'compression' => 'sometimes|string',
-                'displacement' => 'sometimes|string',
-                'horsepower' => 'sometimes|string',
-                'torque' => 'sometimes|string',
-                'fuel' => 'sometimes|string',
-                'drive' => 'sometimes|string',
-                'transmission' => 'sometimes|string',
-                'cooling' => 'sometimes|string',
-                'front_suspension' => 'sometimes|string',
-                'rear_suspension' => 'sometimes|string',
-                'frame' => 'sometimes|string',
-                'travel' => 'sometimes|string',
-                'swingarm' => 'sometimes|string',
-                'dry_weight' => 'sometimes|string',
-                'wet_weight' => 'sometimes|string',
-                'seat' => 'sometimes|string',
-                'wheelbase' => 'sometimes|string',
-                'fuel_tank' => 'sometimes|string',
-                'clearance' => 'sometimes|string',
-                'tires' => 'sometimes|string',
-                'wheel' => 'sometimes|string',
-                'brakes' => 'sometimes|string',
-                'abs' => 'sometimes|string',
-                'traction' => 'sometimes|string',
-                'tft' => 'sometimes|string',
-                'lighting' => 'sometimes|string',
-                'ride_mode' => 'sometimes|string',
-                'quickshifter' => 'sometimes|string',
-                'cruise' => 'sometimes|string',
-                'colors' => 'array',
-                'colors.*' => 'sometimes|string'
+            /* ------------------------------------------------------
+        | 1. Validate Request
+        ------------------------------------------------------ */
+            $validated = $request->validate([
+                'name' => 'required|string',
+                'brand' => 'required|string',
+                'unit_type' => 'required|string',
+                'description' => 'required|string',
+                'price' => 'required|numeric',
+                'interest' => 'required|integer',
+                'tenure' => 'required|integer',
+                'rebate' => 'required|numeric',
+                'downpayment' => 'required|numeric',
+                'colors' => 'required|array',
+                'colors.*.hex_value' => 'required|string',
+                'colors.*.quantity' => 'required|integer',
+                'colors.*.images' => 'array',
+                'colors.*.images.*' => 'file|mimes:jpg,jpeg,png',
             ]);
 
-            if ($request->has('colors')) {
-                foreach ($request->colors as $key => $color) {
-                    $motorcycle->colors()->updateOrCreate(
-                        ['color' => $color],
-                        ['quantity' => $request->totalQuantity[$key]]
-                    );
-                }
-            }
+            Log::info("VALIDATION PASSED", $validated);
 
-            if ($request->has('deletes')) {
-                foreach ($request->deletes as $id) {
-                    $image = Image::where('id', $id)
+            /* ------------------------------------------------------
+        | 2. DELETE OLD IMAGES
+        ------------------------------------------------------ */
+            if ($request->has('imagesToDelete')) {
+                foreach ($request->imagesToDelete as $id) {
+                    $img = Image::where('id', $id)
                         ->where('motorcycle_id', $motorcycle->id)
                         ->first();
 
-                    if ($image) {
-                        if ($image->path && Storage::disk('public')->exists($image->path))
-                            Storage::disk('public')->delete($image->path);
+                    if ($img) {
+                        if (Storage::disk('public')->exists($img->path)) {
+                            Storage::disk('public')->delete($img->path);
+                        }
 
-                        $image->delete();
+                        $img->delete();
+
+                        Log::info("IMAGE DELETED", ['id' => $id]);
+                    }
+                }
+            }
+
+            /* ------------------------------------------------------
+        | 3. UPDATE OR CREATE COLORS + UPLOAD NEW IMAGES
+        ------------------------------------------------------ */
+            if ($request->has('colors')) {
+                foreach ($request->colors as $index => $c) {
+                    // 3A. UPDATE EXISTING COLOR
+                    if (isset($c['id'])) {
+                        $colorRecord = $motorcycle->colors()->find($c['id']);
+                        if ($colorRecord) {
+                            $colorRecord->update([
+                                'hex_value' => $c['hex_value'],
+                                'quantity'  => $c['quantity'],
+                            ]);
+
+                            Log::info("COLOR UPDATED", [
+                                'color_id' => $c['id'],
+                                'data' => $c
+                            ]);
+                        }
                     }
 
-                    $motorImg = $motorcycle->images()->first();
+                    // 3B. CREATE NEW COLOR
+                    else {
+                        $colorRecord = $motorcycle->colors()->create([
+                            'hex_value' => $c['hex_value'],
+                            'quantity'  => $c['quantity'],
+                        ]);
 
-                    if ($motorImg) $validatedData['file_path'] = $motorImg->path;
-                    else $validatedData['file_path'] = 'motor_icon';
+                        Log::info("COLOR CREATED", [
+                            'data' => $c,
+                            'new_id' => $colorRecord->id
+                        ]);
+                    }
+
+                    // 3C. STORE NEW IMAGES UNDER THIS COLOR
+                    if ($request->hasFile("colors.$index.images")) {
+                        foreach ($request->file("colors.$index.images") as $file) {
+                            $path = $file->store('uploads', 'public');
+
+                            $motorcycle->images()->create([
+                                'path' => $path,
+                                'image_type' => 'color',
+                                'color_id' => $colorRecord->id
+                            ]);
+
+                            Log::info("NEW IMAGE SAVED", [
+                                'path' => $path,
+                                'color_id' => $colorRecord->id
+                            ]);
+                        }
+                    }
                 }
             }
 
-            if ($request->has('newColors')) {
-                foreach ((array) $request->file('newColors') as $index => $imgData) {
-                    $file = $request->file("newColors.$index");
-                    $path = $file->store('uploads', 'public');
+            /* ------------------------------------------------------
+        | 4. UPDATE MOTORCYCLE MAIN FIELDS
+        ------------------------------------------------------ */
+            $motorcycle->fill($validated)->save();
+            Log::info("MOTORCYCLE UPDATED", ['fields' => $validated]);
 
-                    $motorcycle->images()->create(['path' => $path, 'image_type' => 'color']);
+            /* ------------------------------------------------------
+        | 5. UPDATE THUMBNAIL (file_path)
+        ------------------------------------------------------ */
+            $firstImage = $motorcycle->images()->first();
 
-                    if ($index == 0) $validatedData['file_path'] = $path;
-                }
-            }
+            $motorcycle->file_path = $firstImage
+                ? $firstImage->path
+                : "motor_icon";
 
-            if ($request->has('newAngles')) {
-                foreach ((array) $request->file('newAngles') as $index => $imgData) {
-                    $file = $request->file("newAngles.$index");
-                    $path = $file->store('uploads', 'public');
+            $motorcycle->save();
 
-                    $motorcycle->images()->create(['path' => $path, 'image_type' => 'angle']);
-
-                    if ($index == 0) $validatedData['file_path'] = $path;
-                }
-            }
-
-            $motorcycle->update($validatedData);
+            Log::info("THUMBNAIL UPDATED", ['file_path' => $motorcycle->file_path]);
 
             return response()->json([
-                'message' => 'Unit was updated successfully!',
-                'type' => 'success'
-            ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['errors ' => $e->errors()], 422);
+                'message' => 'Unit updated successfully!',
+                'type' => 'success',
+                'updated_fields' => $validated,
+                'deleted_images' => $request->imagesToDelete ?? [],
+            ], 200);
+        } catch (\Exception $e) {
+
+            Log::error("UPDATE FAILED", [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Update failed',
+                'type' => 'error',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
