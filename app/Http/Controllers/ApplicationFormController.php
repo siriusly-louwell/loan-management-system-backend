@@ -132,7 +132,7 @@ class ApplicationFormController extends Controller
             ->where($by, $value)
             ->when($by === 'user_id', fn($q) => $q->with('address'))
             ->when($by === 'id', fn($q) => $q->with(['transactions.motorcycle', 'address', 'ciReport', 'comaker']))
-            ->when($stff === 'record_id', fn($q) => $q->with(['transactions.motorcycle']))
+            ->when($stff === 'record_id', fn($q) => $q->with(['transactions.motorcycle', 'schedules']))
             ->orderByDesc('created_at')
             ->first();
 
