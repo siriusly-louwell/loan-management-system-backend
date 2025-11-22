@@ -9,6 +9,7 @@ use App\Http\Controllers\CiReportController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\CreditHistoryController;
+use App\Http\Controllers\ScheduleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -90,3 +91,11 @@ Route::resource('credit', CreditHistoryController::class);
 |--------------------------------------------------------------------------
 */
 Route::resource('report', CiReportController::class);
+
+
+/*
+|--------------------------------------------------------------------------
+| SCHEDULE ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::resource('schedule', ScheduleController::class);

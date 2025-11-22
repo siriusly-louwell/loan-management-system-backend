@@ -92,9 +92,23 @@ class PaymentController extends Controller
                 ], 404);
 
             $paymentStatus = $this->determinePaymentStatus($schedule->due_date);
+            $application = ApplicationForm::with('transactions.motorcycle')->findOrFail($validated['application_form_id']);
+            $rebateValue = $application->transactions[0]->motorcycle->rebate ?? 0;
+
+            $requiredAmount = $paymentStatus === "on_time"
+                ? $schedule->amount_due - $rebateValue
+                : $schedule->amount_due;
+
+            if ($validated['amount_paid'] < $requiredAmount) {
+                return response()->json([
+                    'message' => 'Insufficient payment. Required: ₱' . $requiredAmount,
+                    'type' => 'warn'
+                ], 200);
+            }
+
             $previousPayments = Payment::where('application_form_id', $validated['application_form_id'])
                 ->sum('amount_paid');
-                
+
             $totalPaidAmount = $previousPayments + $validated['amount_paid'];
             $currentBalance = $validated['total_amount'] - $totalPaidAmount;
             $totalPreviousPayments = Payment::where('application_form_id', $validated['application_form_id'])

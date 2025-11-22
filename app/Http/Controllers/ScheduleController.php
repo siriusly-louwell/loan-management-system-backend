@@ -44,9 +44,10 @@ class ScheduleController extends Controller
      * @param  \App\Models\Schedule  $schedule
      * @return \Illuminate\Http\Response
      */
-    public function show(Schedule $schedule)
+    public function show($value)
     {
-        //
+        $schedule = Schedule::where('application_form_id', $value)->first();
+        return response()->json($schedule);
     }
 
     /**
