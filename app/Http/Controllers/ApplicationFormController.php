@@ -128,19 +128,14 @@ class ApplicationFormController extends Controller
         $by = request()->query('by', 'id');
         $allowedColumns = ['id', 'record_id', 'user_id', 'search'];
 
-        // Validate the 'by' parameter
-        if (!in_array($by, $allowedColumns, true)) {
+        if (!in_array($by, $allowedColumns, true))
             return response()->json(['error' => 'Invalid query parameter'], 400);
-        }
 
-        // Handle search mode: search by record_id or name columns
         if ($by === 'search')
             return $this->searchSimilarApplications($value);
 
-        $query = ApplicationForm::query()
-            ->where($by, $value);
+        $query = ApplicationForm::query()->where($by, $value);
 
-        // Load relations based on the search type
         if ($by === 'user_id') {
             $query->with('address');
         } elseif ($by === 'id') {
