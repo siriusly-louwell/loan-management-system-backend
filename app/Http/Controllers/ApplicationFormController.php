@@ -120,23 +120,62 @@ class ApplicationFormController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\ApplicationForm  $application
+     * @param  string  $value
      * @return \Illuminate\Http\Response
      */
     public function show($value)
     {
-        $by = request()->query('by');
-        $stff = request()->query('stff');
+        $by = request()->query('by', 'id');
+        $allowedColumns = ['id', 'record_id', 'user_id', 'search'];
 
-        $application = ApplicationForm::query()
-            ->where($by, $value)
-            ->when($by === 'user_id', fn($q) => $q->with('address'))
-            ->when($by === 'id', fn($q) => $q->with(['transactions.motorcycle', 'address', 'ciReport', 'comaker']))
-            ->when($stff === 'record_id', fn($q) => $q->with(['transactions.motorcycle', 'schedules']))
+        // Validate the 'by' parameter
+        if (!in_array($by, $allowedColumns, true)) {
+            return response()->json(['error' => 'Invalid query parameter'], 400);
+        }
+
+        // Handle search mode: search by record_id or name columns
+        if ($by === 'search')
+            return $this->searchSimilarApplications($value);
+
+        $query = ApplicationForm::query()
+            ->where($by, $value);
+
+        // Load relations based on the search type
+        if ($by === 'user_id') {
+            $query->with('address');
+        } elseif ($by === 'id') {
+            $query->with(['transactions.motorcycle', 'address', 'ciReport', 'comaker']);
+        } elseif ($by === 'record_id') {
+            $query->with(['transactions.motorcycle', 'schedules']);
+        }
+
+        $application = $query->orderByDesc('created_at')->first();
+
+        if (!$application)
+            return response()->json(['error' => 'Record not found'], 404);
+
+        return response()->json($application);
+    }
+
+    /**
+     * Search for similar applications by record_id or name columns
+     *
+     * @param  string  $searchValue
+     * @return \Illuminate\Http\Response
+     */
+    private function searchSimilarApplications($searchValue)
+    {
+        $results = ApplicationForm::with(['transactions.motorcycle', 'schedules'])
+            ->where(function ($query) use ($searchValue) {
+                $query->where('record_id', 'like', "%{$searchValue}%")
+                    ->orWhere('first_name', 'like', "%{$searchValue}%")
+                    ->orWhere('last_name', 'like', "%{$searchValue}%")
+                    ->orWhere('middle_name', 'like', "%{$searchValue}%");
+            })
             ->orderByDesc('created_at')
             ->first();
 
-        return response()->json($application);
+        return response()->json($results);
     }
 
     /**
