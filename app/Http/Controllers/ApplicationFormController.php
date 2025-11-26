@@ -163,7 +163,8 @@ class ApplicationFormController extends Controller
     {
         $results = ApplicationForm::with(['transactions.motorcycle', 'schedules'])
             ->where(function ($query) use ($searchValue) {
-                $query->where('record_id', 'like', "%{$searchValue}%")
+                $query->where(DB::raw('CONCAT(first_name, " ", last_name)'), 'like', "%{$searchValue}%")
+                    ->orWhere('record_id', 'like', "%{$searchValue}%")
                     ->orWhere('first_name', 'like', "%{$searchValue}%")
                     ->orWhere('last_name', 'like', "%{$searchValue}%")
                     ->orWhere('middle_name', 'like', "%{$searchValue}%");
