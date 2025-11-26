@@ -45,7 +45,7 @@ class ApplicationFormController extends Controller
             $applications->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where(DB::raw('CONCAT(first_name, " ", last_name)'), 'like', "%{$search}%")
-                        ->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('first_name', 'like', "%{$search}%")
                         ->orWhere('middle_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('record_id', 'like', "%{$search}%")
