@@ -9,6 +9,7 @@ use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\PaymentSubmitted;
 
 class PaymentController extends Controller
 {
@@ -75,7 +76,8 @@ class PaymentController extends Controller
                 'amount_paid' => 'required|numeric',
                 'application_form_id' => 'required|integer',
                 'user_id' => 'required|integer',
-                'total_amount' => 'required|numeric'
+                'total_amount' => 'required|numeric',
+                'receipt_number' => 'required'
             ]);
 
             $this->validatePayment($validated['amount_paid'], $request->application_form_id);
@@ -122,6 +124,7 @@ class PaymentController extends Controller
                 'cert_num' => $request->cert_num,
                 'issued_at' => $request->issued_at,
                 'amount_paid' => $validated['amount_paid'],
+                'receipt_number' => $validated['receipt_number'],
                 'balance' => $currentBalance,
                 'status' => $paymentStatus
             ]);
@@ -132,6 +135,15 @@ class PaymentController extends Controller
             }
 
             $this->updateApplicationStatus($validated['application_form_id']);
+
+            $application->notify(new PaymentSubmitted(
+                $application->first_name . ' ' . $application->last_name,
+                $application->contact_num,
+                $validated['amount_paid'],
+                $currentBalance,
+                $application,
+            ));
+
             return response()->json([
                 'message' => 'Payment saved successfully!',
                 'type' => 'success'
