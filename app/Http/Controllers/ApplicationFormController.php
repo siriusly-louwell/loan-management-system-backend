@@ -137,18 +137,13 @@ class ApplicationFormController extends Controller
 
         $query = ApplicationForm::query()->where($by, $value);
 
-        if ($by === 'user_id') {
-            $query->with('address');
-        } elseif ($by === 'id') {
-            $query->with(['schedules','transactions.motorcycle', 'address', 'ciReport', 'comaker']);
-        } elseif ($by === 'record_id') {
-            $query->with(['transactions.motorcycle', 'schedules']);
-        }
+        if ($by === 'user_id') $query->with('address');
+        elseif ($by === 'id') $query->with(['schedules', 'transactions.motorcycle', 'address', 'ciReport', 'comaker']);
+        elseif ($by === 'record_id') $query->with(['transactions.motorcycle', 'schedules']);
 
         $application = $query->orderByDesc('created_at')->first();
 
-        if (!$application)
-            return response()->json(['error' => 'Record not found'], 404);
+        if (!$application) return response()->json(['error' => 'Record not found'], 404);
 
         return response()->json($application);
     }
@@ -287,7 +282,7 @@ class ApplicationFormController extends Controller
 
         $files = [];
 
-        // When user wants to keep existing files
+        // ? When user wants to keep existing files
         if ($request->boolean('keep_files')) {
             foreach ($fileKeys as $key) {
                 $files[$key] = Str::contains($key, 'co_')
@@ -298,7 +293,7 @@ class ApplicationFormController extends Controller
             return $files;
         }
 
-        // When new uploads are required
+        // ? When new uploads are required
         foreach ($fileKeys as $key) {
             if (!$request->hasFile($key)) {
                 if (Str::contains($key, 'co_')) {
@@ -408,9 +403,7 @@ class ApplicationFormController extends Controller
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Invalid month format. Use YYYY-MM.'], 400);
             }
-        } else {
-            $date = Carbon::now()->startOfMonth();
-        }
+        } else $date = Carbon::now()->startOfMonth();
 
         $startDate = $date->copy()->startOfMonth();
         $endDate = $date->copy()->endOfMonth();

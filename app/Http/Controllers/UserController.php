@@ -89,12 +89,11 @@ class UserController extends Controller
                 'status' => 'required|string',
             ]);
 
-            if (User::where('email', $validatedData['email'])->exists()) {
+            if (User::where('email', $validatedData['email'])->exists())
                 return response()->json([
                     'message' => 'An account with this email already exists',
                     'type' => 'warn'
                 ]);
-            }
 
             $arr = [
                 'first_name' => $validatedData['first_name'],
@@ -154,12 +153,6 @@ class UserController extends Controller
         return response()->json($account);
     }
 
-    // public function account(Request $request)
-    // {
-    //     Log::info("here");
-    //     return response()->json(Auth::user());
-    // }
-
     /**
      * Show the form for editing the specified resource.
      *
@@ -183,8 +176,7 @@ class UserController extends Controller
         try {
             $updateType = $request->input('type');
 
-            if ($updateType === 'password')
-                return $this->updatePassword($request, $account);
+            if ($updateType === 'password') return $this->updatePassword($request, $account);
             else return $this->updateUserDetails($request, $account);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json(['errors' => $e->errors()], 422);
@@ -207,18 +199,13 @@ class UserController extends Controller
             'new_password' => 'required|string|min:6|confirmed',
         ]);
 
-        // Verify current password is correct
-        if (!Hash::check($validatedData['current_password'], $account->password)) {
+        if (!Hash::check($validatedData['current_password'], $account->password))
             return response()->json([
                 'message' => 'Current password is incorrect',
                 'type' => 'error'
             ]);
-        }
 
-        // Update password
-        $account->update([
-            'password' => Hash::make($validatedData['new_password'])
-        ]);
+        $account->update(['password' => Hash::make($validatedData['new_password'])]);
 
         return response()->json([
             'message' => 'Password updated successfully',
@@ -247,14 +234,8 @@ class UserController extends Controller
             'pfp' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Handle profile picture upload if provided
-        if ($request->hasFile('pfp')) {
-            // Optionally delete old profile picture if exists
-            // Storage::delete($account->pfp);
-            $validatedData['pfp'] = $request->file('pfp')->store('uploads', 'public');
-        }
+        if ($request->hasFile('pfp')) $validatedData['pfp'] = $request->file('pfp')->store('uploads', 'public');
 
-        // Update only provided fields
         $account->update($validatedData);
 
         return response()->json([

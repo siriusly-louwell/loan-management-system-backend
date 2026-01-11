@@ -29,9 +29,7 @@ class MotorcycleController extends Controller
                     $loanAmount = ($motor->price ?? 0) - ($motor->downpayment ?? 0);
                     $monthlyRate = $motor->interest / 12 / 100;
 
-                    if ($tenure <= 0 || $loanAmount <= 0) {
-                        return false;
-                    }
+                    if ($tenure <= 0 || $loanAmount <= 0) return false;
 
                     $emi = $monthlyRate == 0
                         ? $loanAmount / $tenure
@@ -171,14 +169,14 @@ class MotorcycleController extends Controller
             ]);
 
             foreach ($request->colors as $index => $colorGroup) {
-                // Save each color entry
+                // ? Save each color entry
                 $color = $motor->colors()->create([
                     "motorcycle_id" => $motor->id,
                     'hex_value' => $colorGroup['hex_value'],
                     'quantity' => $colorGroup['quantity'],
                 ]);
 
-                // Save per-color images
+                // ? Save per-color images
                 if ($request->hasFile("colors.$index.images")) {
                     foreach ($request->file("colors.$index.images") as $image) {
                         $path = $image->store('uploads', 'public');
@@ -186,7 +184,7 @@ class MotorcycleController extends Controller
                         $motor->images()->create([
                             'path' => $path,
                             'image_type' => 'color',
-                            'motorcycle_id' => $motor->id, // if you want to associate images per color
+                            'motorcycle_id' => $motor->id,
                             "color_id" => $color->id
                         ]);
                     }
@@ -243,9 +241,6 @@ class MotorcycleController extends Controller
         ]);
 
         try {
-            /* ------------------------------------------------------
-        | 1. Validate Request
-        ------------------------------------------------------ */
             $validated = $request->validate([
                 'name' => 'required|string',
                 'brand' => 'required|string',
@@ -263,11 +258,6 @@ class MotorcycleController extends Controller
                 'colors.*.images.*' => 'file|mimes:jpg,jpeg,png',
             ]);
 
-            Log::info("VALIDATION PASSED", $validated);
-
-            /* ------------------------------------------------------
-        | 2. DELETE OLD IMAGES
-        ------------------------------------------------------ */
             if ($request->has('imagesToDelete')) {
                 foreach ($request->imagesToDelete as $id) {
                     $img = Image::where('id', $id)
@@ -275,52 +265,29 @@ class MotorcycleController extends Controller
                         ->first();
 
                     if ($img) {
-                        if (Storage::disk('public')->exists($img->path)) {
+                        if (Storage::disk('public')->exists($img->path))
                             Storage::disk('public')->delete($img->path);
-                        }
 
                         $img->delete();
-
-                        Log::info("IMAGE DELETED", ['id' => $id]);
                     }
                 }
             }
 
-            /* ------------------------------------------------------
-        | 3. UPDATE OR CREATE COLORS + UPLOAD NEW IMAGES
-        ------------------------------------------------------ */
             if ($request->has('colors')) {
                 foreach ($request->colors as $index => $c) {
-                    // 3A. UPDATE EXISTING COLOR
                     if (isset($c['id'])) {
                         $colorRecord = $motorcycle->colors()->find($c['id']);
-                        if ($colorRecord) {
+                        if ($colorRecord)
                             $colorRecord->update([
                                 'hex_value' => $c['hex_value'],
                                 'quantity'  => $c['quantity'],
                             ]);
-
-                            Log::info("COLOR UPDATED", [
-                                'color_id' => $c['id'],
-                                'data' => $c
-                            ]);
-                        }
-                    }
-
-                    // 3B. CREATE NEW COLOR
-                    else {
+                    } else
                         $colorRecord = $motorcycle->colors()->create([
                             'hex_value' => $c['hex_value'],
                             'quantity'  => $c['quantity'],
                         ]);
 
-                        Log::info("COLOR CREATED", [
-                            'data' => $c,
-                            'new_id' => $colorRecord->id
-                        ]);
-                    }
-
-                    // 3C. STORE NEW IMAGES UNDER THIS COLOR
                     if ($request->hasFile("colors.$index.images")) {
                         foreach ($request->file("colors.$index.images") as $file) {
                             $path = $file->store('uploads', 'public');
@@ -330,34 +297,16 @@ class MotorcycleController extends Controller
                                 'image_type' => 'color',
                                 'color_id' => $colorRecord->id
                             ]);
-
-                            Log::info("NEW IMAGE SAVED", [
-                                'path' => $path,
-                                'color_id' => $colorRecord->id
-                            ]);
                         }
                     }
                 }
             }
 
-            /* ------------------------------------------------------
-        | 4. UPDATE MOTORCYCLE MAIN FIELDS
-        ------------------------------------------------------ */
             $motorcycle->fill($validated)->save();
-            Log::info("MOTORCYCLE UPDATED", ['fields' => $validated]);
-
-            /* ------------------------------------------------------
-        | 5. UPDATE THUMBNAIL (file_path)
-        ------------------------------------------------------ */
             $firstImage = $motorcycle->images()->first();
 
-            $motorcycle->file_path = $firstImage
-                ? $firstImage->path
-                : "motor_icon";
-
+            $motorcycle->file_path = $firstImage ? $firstImage->path : "motor_icon";
             $motorcycle->save();
-
-            Log::info("THUMBNAIL UPDATED", ['file_path' => $motorcycle->file_path]);
 
             return response()->json([
                 'message' => 'Unit updated successfully!',
@@ -366,12 +315,6 @@ class MotorcycleController extends Controller
                 'deleted_images' => $request->imagesToDelete ?? [],
             ], 200);
         } catch (\Exception $e) {
-
-            Log::error("UPDATE FAILED", [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
             return response()->json([
                 'message' => 'Update failed',
                 'type' => 'error',
@@ -406,9 +349,7 @@ class MotorcycleController extends Controller
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Invalid month format. Use YYYY-MM.'], 400);
             }
-        } else {
-            $date = Carbon::now()->startOfMonth();
-        }
+        } else $date = Carbon::now()->startOfMonth();
 
         $startDate = $date->copy()->startOfMonth();
         $endDate = $date->copy()->endOfMonth();

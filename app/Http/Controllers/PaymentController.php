@@ -101,12 +101,11 @@ class PaymentController extends Controller
                 ? $schedule->amount_due - $rebateValue
                 : $schedule->amount_due;
 
-            if ($validated['amount_paid'] < $requiredAmount) {
+            if ($validated['amount_paid'] < $requiredAmount)
                 return response()->json([
                     'message' => 'Insufficient payment. Required: ₱' . $requiredAmount,
                     'type' => 'warn'
                 ], 200);
-            }
 
             $previousPayments = Payment::where('application_form_id', $validated['application_form_id'])
                 ->sum('amount_paid');
@@ -170,14 +169,12 @@ class PaymentController extends Controller
 
         $query = Payment::where($by, $value);
 
-        if ($isLatest) {
+        if ($isLatest)
             $payment = $query
                 ->orderByDesc('created_at')
                 ->orderByDesc('schedule_id')
                 ->first();
-        } else {
-            $payment = $query->first();
-        }
+        else $payment = $query->first();
 
         return response()->json($payment);
     }
@@ -222,8 +219,7 @@ class PaymentController extends Controller
         $type = $request->input('type');
         $month = $request->input('month');
 
-        if ($request->boolean('analysis'))
-            $data = Payment::select('status', 'created_at')->get();
+        if ($request->boolean('analysis')) $data = Payment::select('status', 'created_at')->get();
 
         if ($month) {
             try {
@@ -231,9 +227,7 @@ class PaymentController extends Controller
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Invalid month format. Use YYYY-MM.'], 400);
             }
-        } else {
-            $date = Carbon::now()->startOfMonth();
-        }
+        } else $date = Carbon::now()->startOfMonth();
 
         $startDate = $date->copy()->startOfMonth();
         $endDate = $date->copy()->endOfMonth();
@@ -301,19 +295,7 @@ class PaymentController extends Controller
 
     private function validatePayment($amount, $applicationId)
     {
-        if ($amount <= 0) {
-            throw new \Exception('Payment amount must be positive');
-        }
-
-        // Check if total payments don't exceed total loan amount
-        // $totalLoanAmount = Schedule::where('application_form_id', $applicationId)
-        //     ->sum('amount_due');
-        // $totalPaid = Payment::where('application_form_id', $applicationId)
-        //     ->sum('amount_paid');
-
-        // if (($totalPaid + $amount) > $totalLoanAmount) {
-        //     throw new \Exception('Payment exceeds total loan amount');
-        // }
+        if ($amount <= 0) throw new \Exception('Payment amount must be positive');
     }
 
     private function determinePaymentStatus($dueDate, $gracePeriodDays = 3)
@@ -322,9 +304,7 @@ class PaymentController extends Controller
         $dueDate = Carbon::parse($dueDate);
         $graceDate = $dueDate->copy()->addDays($gracePeriodDays);
 
-        if ($currentDate->isAfter($graceDate)) {
-            return 'late';
-        }
+        if ($currentDate->isAfter($graceDate)) return 'late';
         return 'on_time';
     }
 
@@ -352,10 +332,8 @@ class PaymentController extends Controller
                 ->orderBy('due_date', 'asc')
                 ->first();
 
-            if (!$nextSchedule) {
-                // ? Store excess as credit or handle according to business rules
-                break;
-            }
+            // ? Store excess as credit or handle according to business rules
+            if (!$nextSchedule) break;
 
             $paymentAmount = min($remainingAmount, $nextSchedule->amount_due);
             $payments[] = [
